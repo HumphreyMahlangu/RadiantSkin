@@ -8,6 +8,8 @@
 
 package ac.za.mycput.domain;
 
+import jakarta.persistence.*;
+
 @Entity
 public class CartItem  {
 
@@ -23,7 +25,7 @@ public class CartItem  {
 
     private Product product;
 
-    private CartItem() {
+    protected CartItem() {
     }
 
     private CartItem(Builder builder) {
