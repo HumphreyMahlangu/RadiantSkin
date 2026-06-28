@@ -11,6 +11,7 @@ package ac.za.mycput.domain;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.*;
 
 
 @Entity
