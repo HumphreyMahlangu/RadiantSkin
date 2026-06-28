@@ -56,6 +56,16 @@ public class CartItem  {
         return product;
     }
 
+    @Override
+    public String toString() {
+        return "CartItem{" +
+                "cartItemId=" + cartItemId +
+                ", quantity=" + quantity +
+                ", cart=" + cart +
+                ", product=" + product +
+                '}';
+    }
+
     public static class Builder {
         private Long cartItemId;
         private int quantity;
