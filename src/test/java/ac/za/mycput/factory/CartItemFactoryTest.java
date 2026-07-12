@@ -1,5 +1,6 @@
 package ac.za.mycput.factory;
 
+// Lebogang Andile Mahlangu  230561454 //
 import ac.za.mycput.domain.CartItem;
 import ac.za.mycput.domain.Product;
 import ac.za.mycput.util.Helper;
@@ -19,7 +20,7 @@ class CartItemFactoryTest {
         CartItem cartItem = CartItemFactory.createCartItem(
                 1L,
                 2,
-                produt
+                product
         );
 
         assertNotNull(cartItem);
