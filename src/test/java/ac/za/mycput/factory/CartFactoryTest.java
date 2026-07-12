@@ -1,5 +1,6 @@
 package ac.za.mycput.factory;
 
+// Lebogang Andile Mahlangu  230561454 //
 import ac.za.mycput.domain.Cart;
 import ac.za.mycput.domain.CartItem;
 import ac.za.mycput.domain.Customer;
@@ -21,7 +22,7 @@ class CartFactoryTest {
                 .setCustomerId(1L)
                 .build();
 
-        List<CartItem> cartItem new ArrayList<>();
+        List<CartItem> cartItems = new ArrayList<>();
 
         Cart cart = CartFactory.createCart(
                 1L,
