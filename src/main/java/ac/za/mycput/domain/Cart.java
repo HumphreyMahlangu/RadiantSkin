@@ -8,9 +8,12 @@
 
 package ac.za.mycput.domain;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.*;
 
 
 @Entity
@@ -57,6 +60,16 @@ public class Cart {
         return cartItems;
     }
 
+    @Override
+    public String toString() {
+        return "Cart.Builder{" +
+                "cartId=" + cartId +
+                ", createdDate=" + createdDate +
+                ", customer=" + customer +
+                ", cartItems=" + cartItems +
+                '}';
+    }
+
     public static class Builder {
         private Long cartId;
         private LocalDate createdDate;
@@ -80,6 +93,16 @@ public class Cart {
 
         public Builder setCartItems(List<CartItem> cartItems) {
             this.cartItems = cartItems;
+            return this;
+        }
+
+
+
+        public Builder copy(Cart cart) {
+            this.cartId = cart.cartId;
+            this.createdDate = cart.createdDate;
+            this.customer = cart.customer;
+            this.cartItems = cart.cartItems;
             return this;
         }
 
