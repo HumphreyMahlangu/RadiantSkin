@@ -9,6 +9,7 @@
 package ac.za.mycput.domain;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 public class CartItem  {
@@ -19,6 +20,7 @@ public class CartItem  {
 
     private int quantity;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "cart_id")
     private Cart cart;
@@ -36,8 +38,6 @@ public class CartItem  {
         this.cart = builder.cart;
         this.product = builder.product;
     }
-
-
 
     public Long getCartItemId() {
         return cartItemId;
@@ -115,12 +115,10 @@ public class CartItem  {
             return this;
         }
 
-        /*
-         * Builds and returns a CartItem object.
-         */
         public CartItem build() {
             return new CartItem(this);
         }
     }
 
 }
+

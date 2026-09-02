@@ -9,6 +9,7 @@
 package ac.za.mycput.domain;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -45,12 +46,15 @@ public abstract class Product {
         this.volumeMl = volumeMl;
     }
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     protected List<Review> reviews = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     protected List<OrderItem> orderItems = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     protected List<CartItem> cartItems = new ArrayList<>();
 
