@@ -1,0 +1,10 @@
+﻿{
+    "name": "Nourishing Hand and Body Cream",
+    "description": "Rich cream that softens and protects hands and body.",
+    "brand": "RadiantSkin",
+    "price": 179.00,
+    "stockQuantity": 40,
+    "imageUrl": "/images/Body Care5.png",
+    "volumeMl": 150,
+    "skinConcern": "Dryness"
+}

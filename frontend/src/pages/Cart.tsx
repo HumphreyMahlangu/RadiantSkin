@@ -2,94 +2,119 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import CartItem from "./CartItem";
 
-export interface CartLineItem {
+// This describes what one item in the cart looks like
+interface CartItemData {
+  cartItemId: number;
+  quantity: number;
+  product: {
     productId: number;
     name: string;
     price: number;
     imageUrl: string;
-    quantity: number;
+  };
 }
 
-const CART_STORAGE_KEY = "cart";
 const DELIVERY_FEE = 60;
 
-export function getCart(): CartLineItem[] {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
-    if (!stored) return [];
-    try {
-        return JSON.parse(stored) as CartLineItem[];
-    } catch {
-        return [];
-    }
-}
-
-export function saveCart(items: CartLineItem[]) {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-}
-
-export function addToCart(
-    product: {productId: number; name: string; price: number; imageUrl: string},
-    quantity: number = 1
-): CartLineItem[] {
-    const items = getCart();
-    const existing = items.find((item) => item.productId === product.productId);
-
-    if (existing) {
-        existing.quantity += quantity;
-    } else {
-        items.push({ ...product, quantity });
-    }
-
-    saveCart(items);
-    return items;
-}
-
 function Cart() {
-    const [items, setItems] = useState<CartLineItem[]>([]);
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        setItems(getCart());
-    }, []);
+  // This holds the list of items currently in the cart
+  const [items, setItems] = useState<CartItemData[]>([]);
 
-    const updateItems = (next: CartLineItem[]) => {
-        setItems(next);
-        saveCart(next);
-    };
+  // This function goes to the backend and gets the customer's cart
+  function loadCart() {
+    // Get the logged in customer from local storage
+    const customerText = localStorage.getItem("customer");
 
-    const handleIncrease = (productId: number) => {
-        updateItems(
-            items.map((item) =>
-            item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item)
-        );
-    };
+    // If nobody is logged in, send them to the login page
+    if (!customerText) {
+      navigate("/login");
+      return;
+    }
 
-    const handleDecrease = (productId: number) => {
-        const target = items.find((item) => item.productId === productId);
-        if (target && target.quantity <= 1) {
-            handleRemove(productId);
-            return;
+    const customer = JSON.parse(customerText);
+
+    // Call the backend to get this customer's cart
+    fetch("http://localhost:8080/cart/customer/" + customer.userId)
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (data) {
+        if (data && data.cartItems) {
+          setItems(data.cartItems);
+        } else {
+          setItems([]);
         }
-        updateItems(
-            items.map((item) =>
-            item.productId === productId ? { ...item, quantity: item.quantity - 1 } : item)
-        );
-    };
+      });
+  }
 
-    const handleRemove = (productId: number) => {
-        updateItems(items.filter((item) => item.productId !== productId));
-    };
+  // Run loadCart() once, when the page first opens
+  useEffect(function () {
+    loadCart();
+  }, []);
 
-    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const delivery = items.length > 0 ? DELIVERY_FEE : 0;
-    const total = subtotal + delivery;
+  // Increase the quantity of one item by 1
+  function increaseQuantity(item: CartItemData) {
+    const newQuantity = item.quantity + 1;
 
-    return (
+    fetch("http://localhost:8080/cartitem/updateQuantity", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cartItemId: item.cartItemId,
+        quantity: newQuantity,
+      }),
+    }).then(function () {
+      loadCart();
+    });
+  }
+
+  // Decrease the quantity of one item by 1
+  // If quantity is already 1, remove the item instead
+  function decreaseQuantity(item: CartItemData) {
+    if (item.quantity <= 1) {
+      removeItem(item.cartItemId);
+      return;
+    }
+
+    const newQuantity = item.quantity - 1;
+
+    fetch("http://localhost:8080/cartitem/updateQuantity", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cartItemId: item.cartItemId,
+        quantity: newQuantity,
+      }),
+    }).then(function () {
+      loadCart();
+    });
+  }
+
+  // Remove one item from the cart completely
+  function removeItem(cartItemId: number) {
+    fetch("http://localhost:8080/cartitem/delete/" + cartItemId, {
+      method: "DELETE",
+    }).then(function () {
+      loadCart();
+    });
+  }
+
+  // Work out the totals to show at the bottom
+  let subtotal = 0;
+  for (let i = 0; i < items.length; i++) {
+    subtotal = subtotal + items[i].product.price * items[i].quantity;
+  }
+
+  const delivery = items.length > 0 ? DELIVERY_FEE : 0;
+  const total = subtotal + delivery;
+
+  return (
     <>
       <Navbar />
- 
+
       <div className="container">
         <div className="main-header">
           <div>
@@ -97,32 +122,47 @@ function Cart() {
             <p>Review items before checking out.</p>
           </div>
         </div>
- 
-        {items.length === 0 ? (
+
+        {items.length === 0 && (
           <div className="panel">
             <p>
-              Your cart is empty. <Link to="/shop">Browse products</Link> to add
-              something you'll love.
+              Your cart is empty.{" "}
+              <Link to="/shop/skin-care">Browse products</Link> to add something
+              you'll love.
             </p>
           </div>
-        ) : (
+        )}
+
+        {items.length > 0 && (
           <>
             <div className="panel" style={{ marginBottom: 24 }}>
-              {items.map((item) => (
-                <CartItem
-                  key={item.productId}
-                  productId={item.productId}
-                  name={item.name}
-                  price={item.price}
-                  imageUrl={item.imageUrl}
-                  quantity={item.quantity}
-                  onIncrease={handleIncrease}
-                  onDecrease={handleDecrease}
-                  onRemove={handleRemove}
-                />
-              ))}
+              {items.map(function (item) {
+                return (
+                  <div className="cart-item" key={item.cartItemId}>
+                    <img src={item.product.imageUrl} alt={item.product.name} />
+
+                    <div className="cart-item-info">
+                      <h4>{item.product.name}</h4>
+                      <div className="product-price">R{item.product.price}</div>
+                    </div>
+
+                    <div className="qty-control">
+                      <button onClick={() => decreaseQuantity(item)}>-</button>
+                      <span>{item.quantity}</span>
+                      <button onClick={() => increaseQuantity(item)}>+</button>
+                    </div>
+
+                    <button
+                      className="icon-btn"
+                      onClick={() => removeItem(item.cartItemId)}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                );
+              })}
             </div>
- 
+
             <div className="panel">
               <div className="cart-summary">
                 <span>Subtotal</span>
@@ -139,7 +179,6 @@ function Cart() {
               <button
                 className="btn btn-primary btn-block"
                 style={{ marginTop: 18 }}
-                onClick={() => navigate("/checkout")}
               >
                 Checkout
               </button>
@@ -147,7 +186,7 @@ function Cart() {
           </>
         )}
       </div>
- 
+
       <Footer />
     </>
   );

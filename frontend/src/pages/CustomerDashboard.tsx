@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import products from "../data/products";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 type ViewId =
   | "dashboard"
@@ -10,6 +9,15 @@ type ViewId =
   | "orders"
   | "reviews";
 
+const NAV_ITEMS: { id: ViewId; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "products", label: "Products" },
+  { id: "cart", label: "Cart" },
+  { id: "profile", label: "Profile" },
+  { id: "orders", label: "Orders" },
+  { id: "reviews", label: "Reviews" },
+];
+
 interface Customer {
   userId: number;
   firstName: string;
@@ -18,57 +26,258 @@ interface Customer {
   phoneNumber: string;
 }
 
-interface Product {
+interface ProductData {
   productId: number;
   name: string;
   price: number;
   imageUrl: string;
 }
 
-const NAV_ITEMS: { id: ViewId; icon: string; label: string }[] = [
-  { id: "dashboard", icon: "", label: "Dashboard" },
-  { id: "products", icon: "", label: "Products" },
-  { id: "cart", icon: "", label: "Cart" },
-  { id: "profile", icon: "", label: "Profile" },
-  { id: "orders", icon: "", label: "Orders" },
-  { id: "reviews", icon: "", label: "Reviews" },
-];
+interface CartItemData {
+  cartItemId: number;
+  quantity: number;
+  product: {
+    productId: number;
+    name: string;
+    price: number;
+    imageUrl: string;
+  };
+}
+
+interface OrderData {
+  orderId: number;
+  orderDate: string;
+  status: string;
+  totalAmount: number;
+  orderItems: any[];
+}
+
+const DELIVERY_FEE = 60;
 
 function CustomerDashboard() {
-  const [activeView, setActiveView] = useState<ViewId>("dashboard");
-  const [rating, setRating] = useState(0);
   const navigate = useNavigate();
+  const [activeView, setActiveView] = useState<ViewId>("dashboard");
 
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [backendProducts, setBackendProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [cartItems, setCartItems] = useState<CartItemData[]>([]);
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [addToCartMessage, setAddToCartMessage] = useState("");
+  const [checkoutMessage, setCheckoutMessage] = useState("");
 
-  useEffect(() => {
-    const stored = localStorage.getItem("customer");
+  // Address form fields
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");
+  const [addressMessage, setAddressMessage] = useState("");
 
-    if (!stored) {
-      navigate("/login");
+  // Review form fields
+  const [reviewProductId, setReviewProductId] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewMessage, setReviewMessage] = useState("");
+
+  // Load the logged in customer, or send them to login if nobody is logged in
+  useEffect(
+    function () {
+      const stored = localStorage.getItem("customer");
+
+      if (!stored) {
+        navigate("/login");
+        return;
+      }
+
+      setCustomer(JSON.parse(stored));
+    },
+    [navigate],
+  );
+
+  // Get all products from the three categories, combined into one list
+  function loadProducts() {
+    Promise.all([
+      fetch("http://localhost:8080/skincare/getAll").then((r) => r.json()),
+      fetch("http://localhost:8080/bodycare/getAll").then((r) => r.json()),
+      fetch("http://localhost:8080/haircare/getAll").then((r) => r.json()),
+    ]).then(function (results) {
+      setProducts(results[0].concat(results[1], results[2]));
+    });
+  }
+
+  // Get the customer's real cart from the backend
+  function loadCart(customerId: number) {
+    fetch("http://localhost:8080/cart/customer/" + customerId)
+      .then((r) => r.json())
+      .then(function (data) {
+        setCartItems(data && data.cartItems ? data.cartItems : []);
+      });
+  }
+
+  // Get the customer's real order history from the backend
+  function loadOrders(customerId: number) {
+    fetch("http://localhost:8080/order/customer/" + customerId)
+      .then((r) => r.json())
+      .then((data) => setOrders(data));
+  }
+
+  // Load everything once we know who the customer is
+  useEffect(
+    function () {
+      if (customer) {
+        loadProducts();
+        loadCart(customer.userId);
+        loadOrders(customer.userId);
+      }
+    },
+    [customer],
+  );
+
+  // Add a product to the cart
+  function handleAddToCart(productId: number) {
+    if (!customer) return;
+
+    fetch("http://localhost:8080/cartitem/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerId: customer.userId,
+        productId: productId,
+        quantity: 1,
+      }),
+    }).then(function () {
+      setAddToCartMessage("Added to cart!");
+      loadCart(customer.userId);
+      setTimeout(function () {
+        setAddToCartMessage("");
+      }, 2000);
+    });
+  }
+
+  function handleIncrease(item: CartItemData) {
+    if (!customer) return;
+    fetch("http://localhost:8080/cartitem/updateQuantity", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cartItemId: item.cartItemId,
+        quantity: item.quantity + 1,
+      }),
+    }).then(() => loadCart(customer.userId));
+  }
+
+  function handleDecrease(item: CartItemData) {
+    if (!customer) return;
+
+    if (item.quantity <= 1) {
+      handleRemoveFromCart(item.cartItemId);
       return;
     }
 
-    setCustomer(JSON.parse(stored));
+    fetch("http://localhost:8080/cartitem/updateQuantity", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cartItemId: item.cartItemId,
+        quantity: item.quantity - 1,
+      }),
+    }).then(() => loadCart(customer.userId));
+  }
 
-    fetch("http://localhost:8080/product/getAll")
-      .then((response) => response.json())
-      .then((data) => setBackendProducts(data));
-  }, [navigate]);
+  function handleRemoveFromCart(cartItemId: number) {
+    if (!customer) return;
+    fetch("http://localhost:8080/cartitem/delete/" + cartItemId, {
+      method: "DELETE",
+    }).then(() => loadCart(customer.userId));
+  }
 
-  const handleLogout = () => {
+  // Turn the cart into a real order, then go to the confirmation page
+  function handleCheckout() {
+    if (!customer) return;
+
+    fetch("http://localhost:8080/order/checkout/" + customer.userId, {
+      method: "POST",
+    }).then(function (response) {
+      if (response.ok) {
+        response.json().then(function (order) {
+          loadCart(customer.userId);
+          loadOrders(customer.userId);
+          navigate("/order-confirmation", { state: order });
+        });
+      } else {
+        response.text().then((msg) => setCheckoutMessage(msg));
+        setTimeout(function () {
+          setCheckoutMessage("");
+        }, 2500);
+      }
+    });
+  }
+
+  // Save the customer's address (creates it the first time, updates it after that)
+  function handleSaveAddress(e: React.FormEvent) {
+    e.preventDefault();
+    if (!customer) return;
+
+    fetch("http://localhost:8080/address/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerId: customer.userId,
+        street: street,
+        city: city,
+        province: province,
+        postalCode: postalCode,
+        country: country,
+      }),
+    }).then(function () {
+      setAddressMessage("Address saved!");
+      setTimeout(function () {
+        setAddressMessage("");
+      }, 2000);
+    });
+  }
+
+  // Submit a review for a product
+  function handleSubmitReview(e: React.FormEvent) {
+    e.preventDefault();
+    if (!customer) return;
+
+    fetch("http://localhost:8080/review/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerId: customer.userId,
+        productId: parseInt(reviewProductId),
+        rating: reviewRating,
+        comment: reviewComment,
+      }),
+    }).then(function (response) {
+      if (response.ok) {
+        setReviewMessage("Review submitted, thank you!");
+        setReviewComment("");
+      } else {
+        setReviewMessage("Something went wrong, please try again.");
+      }
+      setTimeout(function () {
+        setReviewMessage("");
+      }, 2500);
+    });
+  }
+
+  function handleLogout() {
     localStorage.removeItem("customer");
     navigate("/login");
-  };
+  }
 
-  // Still used by the Cart tab below, which isn't connected to the backend yet
-  const allProducts = [
-    ...products["skin-care"],
-    ...products["body-care"],
-    ...products["hair-care"],
-  ];
+  // Work out cart totals
+  let subtotal = 0;
+  for (let i = 0; i < cartItems.length; i++) {
+    subtotal = subtotal + cartItems[i].product.price * cartItems[i].quantity;
+  }
+  const delivery = cartItems.length > 0 ? DELIVERY_FEE : 0;
+  const total = subtotal + delivery;
 
+  // Don't show anything until we know who the customer is
   if (!customer) {
     return null;
   }
@@ -81,20 +290,24 @@ function CustomerDashboard() {
           <div className="role-tag">Customer Account</div>
 
           <nav>
-            {NAV_ITEMS.map((item) => (
-              <div
-                key={item.id}
-                className={`nav-item ${activeView === item.id ? "active" : ""}`}
-                onClick={() => setActiveView(item.id)}
-              >
-                <span className="icon">{item.icon}</span> {item.label}
-              </div>
-            ))}
+            {NAV_ITEMS.map(function (item) {
+              return (
+                <div
+                  key={item.id}
+                  className={
+                    "nav-item " + (activeView === item.id ? "active" : "")
+                  }
+                  onClick={() => setActiveView(item.id)}
+                >
+                  {item.label}
+                </div>
+              );
+            })}
           </nav>
 
           <div className="logout">
             <div className="nav-item" onClick={handleLogout}>
-              <span className="icon">↩</span> Logout
+              Logout
             </div>
           </div>
         </aside>
@@ -107,64 +320,41 @@ function CustomerDashboard() {
                 <p>Here's what's happening with your RadiantSkin account.</p>
               </div>
 
-              <div className="panel" style={{ marginBottom: 24 }}>
-                <div className="panel-head">
-                  <h3>Featured Products</h3>
-                </div>
-                <div className="product-grid">
-                  {backendProducts.slice(0, 4).map((product) => (
-                    <div className="product-card card" key={product.productId}>
-                      <img src={product.imageUrl} alt={product.name} />
-                      <div className="product-info">
-                        <h4>{product.name}</h4>
-                        <div className="product-price">R{product.price}</div>
-                        <div className="product-actions">
-                          <Link
-                            to={`/product/${product.productId}`}
-                            className="btn btn-outline"
-                          >
-                            View
-                          </Link>
-                          <button className="btn btn-primary">Add</button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div className="panel">
                 <div className="panel-head">
                   <h3>Recent Orders</h3>
                 </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Order ID</th>
-                      <th>Date</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>#RS-1042</td>
-                      <td>03 Aug 2026</td>
-                      <td>R689</td>
-                      <td>
-                        <span className="pill pill-success">Delivered</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>#RS-1038</td>
-                      <td>28 Jul 2026</td>
-                      <td>R289</td>
-                      <td>
-                        <span className="pill pill-primary">Processing</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+
+                {orders.length === 0 && (
+                  <p style={{ color: "#6b7280" }}>You have no orders yet.</p>
+                )}
+
+                {orders.length > 0 && (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.slice(0, 3).map(function (order) {
+                        return (
+                          <tr key={order.orderId}>
+                            <td>#{order.orderId}</td>
+                            <td>
+                              {new Date(order.orderDate).toLocaleDateString()}
+                            </td>
+                            <td>R{order.totalAmount}</td>
+                            <td>{order.status}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </section>
           )}
@@ -177,25 +367,31 @@ function CustomerDashboard() {
                   <p>Browse Skin, Body, and Hair Care.</p>
                 </div>
               </div>
+
+              {addToCartMessage && (
+                <p style={{ color: "green" }}>{addToCartMessage}</p>
+              )}
+
               <div className="product-grid">
-                {backendProducts.map((product) => (
-                  <div className="product-card card" key={product.productId}>
-                    <img src={product.imageUrl} alt={product.name} />
-                    <div className="product-info">
-                      <h4>{product.name}</h4>
-                      <div className="product-price">R{product.price}</div>
-                      <div className="product-actions">
-                        <Link
-                          to={`/product/${product.productId}`}
-                          className="btn btn-outline"
-                        >
-                          View Details
-                        </Link>
-                        <button className="btn btn-primary">Add to Cart</button>
+                {products.map(function (product) {
+                  return (
+                    <div className="product-card card" key={product.productId}>
+                      <img src={product.imageUrl} alt={product.name} />
+                      <div className="product-info">
+                        <h4>{product.name}</h4>
+                        <div className="product-price">R{product.price}</div>
+                        <div className="product-actions">
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => handleAddToCart(product.productId)}
+                          >
+                            Add to Cart
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}
@@ -209,55 +405,81 @@ function CustomerDashboard() {
                 </div>
               </div>
 
-              <div className="panel" style={{ marginBottom: 24 }}>
-                <div className="cart-item">
-                  <img src={products["body-care"][0].img} alt="" />
-                  <div className="cart-item-info">
-                    <h4>Whipped Shea Body Butter</h4>
-                    <div className="product-price">R289</div>
-                  </div>
-                  <div className="qty-control">
-                    <button>−</button>
-                    <span>1</span>
-                    <button>+</button>
-                  </div>
-                  <button className="icon-btn">🗑</button>
+              {cartItems.length === 0 && (
+                <div className="panel">
+                  <p>
+                    Your cart is empty. Browse products to add something you'll
+                    love.
+                  </p>
                 </div>
-                <div className="cart-item">
-                  <img src={products["hair-care"][0].img} alt="" />
-                  <div className="cart-item-info">
-                    <h4>Keratin Repair Shampoo</h4>
-                    <div className="product-price">R219</div>
-                  </div>
-                  <div className="qty-control">
-                    <button>−</button>
-                    <span>2</span>
-                    <button>+</button>
-                  </div>
-                  <button className="icon-btn">🗑</button>
-                </div>
-              </div>
+              )}
 
-              <div className="panel">
-                <div className="cart-summary">
-                  <span>Subtotal</span>
-                  <span>R727</span>
-                </div>
-                <div className="cart-summary">
-                  <span>Delivery</span>
-                  <span>R60</span>
-                </div>
-                <div className="cart-summary total">
-                  <span>Total</span>
-                  <span>R787</span>
-                </div>
-                <button
-                  className="btn btn-primary btn-block"
-                  style={{ marginTop: 18 }}
-                >
-                  Checkout
-                </button>
-              </div>
+              {cartItems.length > 0 && (
+                <>
+                  <div className="panel" style={{ marginBottom: 24 }}>
+                    {cartItems.map(function (item) {
+                      return (
+                        <div className="cart-item" key={item.cartItemId}>
+                          <img
+                            src={item.product.imageUrl}
+                            alt={item.product.name}
+                          />
+                          <div className="cart-item-info">
+                            <h4>{item.product.name}</h4>
+                            <div className="product-price">
+                              R{item.product.price}
+                            </div>
+                          </div>
+                          <div className="qty-control">
+                            <button onClick={() => handleDecrease(item)}>
+                              -
+                            </button>
+                            <span>{item.quantity}</span>
+                            <button onClick={() => handleIncrease(item)}>
+                              +
+                            </button>
+                          </div>
+                          <button
+                            className="icon-btn"
+                            onClick={() =>
+                              handleRemoveFromCart(item.cartItemId)
+                            }
+                          >
+                            🗑
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="panel">
+                    <div className="cart-summary">
+                      <span>Subtotal</span>
+                      <span>R{subtotal}</span>
+                    </div>
+                    <div className="cart-summary">
+                      <span>Delivery</span>
+                      <span>R{delivery}</span>
+                    </div>
+                    <div className="cart-summary total">
+                      <span>Total</span>
+                      <span>R{total}</span>
+                    </div>
+
+                    {checkoutMessage && (
+                      <p style={{ color: "green" }}>{checkoutMessage}</p>
+                    )}
+
+                    <button
+                      className="btn btn-primary btn-block"
+                      style={{ marginTop: 18 }}
+                      onClick={handleCheckout}
+                    >
+                      Checkout
+                    </button>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
@@ -270,32 +492,88 @@ function CustomerDashboard() {
                 </div>
               </div>
 
-              <div className="panel">
+              <div className="panel" style={{ marginBottom: 24 }}>
                 <div className="profile-grid">
                   <div className="form-group">
                     <label>First Name</label>
-                    <input type="text" defaultValue={customer.firstName} />
+                    <input type="text" value={customer.firstName} disabled />
                   </div>
                   <div className="form-group">
                     <label>Last Name</label>
-                    <input type="text" defaultValue={customer.lastName} />
+                    <input type="text" value={customer.lastName} disabled />
                   </div>
                   <div className="form-group">
                     <label>Email Address</label>
-                    <input type="email" defaultValue={customer.email} />
+                    <input type="email" value={customer.email} disabled />
                   </div>
                   <div className="form-group">
                     <label>Phone Number</label>
-                    <input type="tel" defaultValue={customer.phoneNumber} />
-                  </div>
-                  <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                    <label>Address</label>
-                    <input type="text" placeholder="Not set yet" />
+                    <input type="tel" value={customer.phoneNumber} disabled />
                   </div>
                 </div>
-                <button className="btn btn-primary" style={{ marginTop: 10 }}>
-                  Save Changes
-                </button>
+              </div>
+
+              <div className="panel">
+                <div className="panel-head">
+                  <h3>Delivery Address</h3>
+                </div>
+
+                <form onSubmit={handleSaveAddress}>
+                  <div className="profile-grid">
+                    <div className="form-group">
+                      <label>Street</label>
+                      <input
+                        value={street}
+                        onChange={(e) => setStreet(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>City</label>
+                      <input
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Province</label>
+                      <input
+                        value={province}
+                        onChange={(e) => setProvince(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Postal Code</label>
+                      <input
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Country</label>
+                      <input
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {addressMessage && (
+                    <p style={{ color: "green" }}>{addressMessage}</p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ marginTop: 10 }}
+                  >
+                    Save Address
+                  </button>
+                </form>
               </div>
             </section>
           )}
@@ -309,48 +587,42 @@ function CustomerDashboard() {
                 </div>
               </div>
 
-              <div className="panel">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Order ID</th>
-                      <th>Date</th>
-                      <th>Items</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>#RS-1042</td>
-                      <td>03 Aug 2026</td>
-                      <td>3</td>
-                      <td>R689</td>
-                      <td>
-                        <span className="pill pill-success">Delivered</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>#RS-1038</td>
-                      <td>28 Jul 2026</td>
-                      <td>1</td>
-                      <td>R289</td>
-                      <td>
-                        <span className="pill pill-primary">Processing</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>#RS-1021</td>
-                      <td>14 Jun 2026</td>
-                      <td>2</td>
-                      <td>R448</td>
-                      <td>
-                        <span className="pill pill-success">Delivered</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              {orders.length === 0 && (
+                <div className="panel">
+                  <p style={{ color: "#6b7280" }}>You have no orders yet.</p>
+                </div>
+              )}
+
+              {orders.length > 0 && (
+                <div className="panel">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map(function (order) {
+                        return (
+                          <tr key={order.orderId}>
+                            <td>#{order.orderId}</td>
+                            <td>
+                              {new Date(order.orderDate).toLocaleDateString()}
+                            </td>
+                            <td>{order.orderItems.length}</td>
+                            <td>R{order.totalAmount}</td>
+                            <td>{order.status}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
 
@@ -364,30 +636,61 @@ function CustomerDashboard() {
               </div>
 
               <div className="panel">
-                <div className="form-group">
-                  <label>Product</label>
-                  <input type="text" defaultValue="Whipped Shea Body Butter" />
-                </div>
-
-                <label>Your Rating</label>
-                <div className="star-input">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      className={star <= rating ? "filled" : ""}
-                      onClick={() => setRating(star)}
+                <form onSubmit={handleSubmitReview}>
+                  <div className="form-group">
+                    <label>Product</label>
+                    <select
+                      value={reviewProductId}
+                      onChange={(e) => setReviewProductId(e.target.value)}
+                      required
                     >
-                      ★
-                    </span>
-                  ))}
-                </div>
+                      <option value="">-- Choose a product --</option>
+                      {products.map(function (product) {
+                        return (
+                          <option
+                            key={product.productId}
+                            value={product.productId}
+                          >
+                            {product.name}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
 
-                <div className="form-group">
-                  <label>Comment</label>
-                  <textarea placeholder="Tell us what you thought..." />
-                </div>
+                  <label>Your Rating</label>
+                  <div className="star-input">
+                    {[1, 2, 3, 4, 5].map(function (star) {
+                      return (
+                        <span
+                          key={star}
+                          className={star <= reviewRating ? "filled" : ""}
+                          onClick={() => setReviewRating(star)}
+                        >
+                          ★
+                        </span>
+                      );
+                    })}
+                  </div>
 
-                <button className="btn btn-primary">Submit Review</button>
+                  <div className="form-group">
+                    <label>Comment</label>
+                    <textarea
+                      placeholder="Tell us what you thought..."
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {reviewMessage && (
+                    <p style={{ color: "green" }}>{reviewMessage}</p>
+                  )}
+
+                  <button type="submit" className="btn btn-primary">
+                    Submit Review
+                  </button>
+                </form>
               </div>
             </section>
           )}

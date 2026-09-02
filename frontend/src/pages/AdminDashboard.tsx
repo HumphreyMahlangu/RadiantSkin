@@ -1,133 +1,494 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-type ViewId = 'dashboard' | 'products' | 'customers' | 'orders' | 'payments' | 'reviews';
+type ViewId =
+  | "dashboard"
+  | "products"
+  | "customers"
+  | "orders"
+  | "payments"
+  | "reviews";
 
-const NAV_ITEMS: { id: ViewId; icon: string; label: string }[] = [
-  { id: 'dashboard', icon: '', label: 'Dashboard' },
-  { id: 'products', icon: '', label: 'Products' },
-  { id: 'customers', icon: '', label: 'Customers' },
-  { id: 'orders', icon: '', label: 'Orders' },
-  { id: 'payments', icon: '', label: 'Payments' },
-  { id: 'reviews', icon: '', label: 'Reviews' },
+const NAV_ITEMS: { id: ViewId; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "products", label: "Products" },
+  { id: "customers", label: "Customers" },
+  { id: "orders", label: "Orders" },
+  { id: "payments", label: "Payments" },
+  { id: "reviews", label: "Reviews" },
 ];
 
+interface ProductData {
+  productId: number;
+  name: string;
+  price: number;
+  stockQuantity: number;
+  category: string;
+}
+
+interface CustomerData {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface ReviewData {
+  reviewId: number;
+  rating: number;
+  comment: string;
+  customer: { firstName: string; lastName: string };
+  product: { name: string };
+}
+
+interface OrderData {
+  orderId: number;
+  orderDate: string;
+  status: string;
+  totalAmount: number;
+  customer: { firstName: string; lastName: string };
+  orderItems: any[];
+}
+
 function AdminDashboard() {
-  const [activeView, setActiveView] = useState<ViewId>('dashboard');
+  const [activeView, setActiveView] = useState<ViewId>("dashboard");
   const navigate = useNavigate();
+
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [customers, setCustomers] = useState<CustomerData[]>([]);
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [stats, setStats] = useState({
+    totalCustomers: 0,
+    totalProducts: 0,
+    totalReviews: 0,
+  });
+
+  // Fields for the "Add Product" form
+  const [newCategory, setNewCategory] = useState("skincare");
+  const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newBrand, setNewBrand] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [newStock, setNewStock] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [newVolumeMl, setNewVolumeMl] = useState("");
+  const [newExtraInfo, setNewExtraInfo] = useState("");
+
+  function loadProducts() {
+    Promise.all([
+      fetch("http://localhost:8080/skincare/getAll").then((r) => r.json()),
+      fetch("http://localhost:8080/bodycare/getAll").then((r) => r.json()),
+      fetch("http://localhost:8080/haircare/getAll").then((r) => r.json()),
+    ]).then(function (results) {
+      const skinProducts = results[0].map(function (p: any) {
+        return {
+          productId: p.productId,
+          name: p.name,
+          price: p.price,
+          stockQuantity: p.stockQuantity,
+          category: "Skin Care",
+        };
+      });
+      const bodyProducts = results[1].map(function (p: any) {
+        return {
+          productId: p.productId,
+          name: p.name,
+          price: p.price,
+          stockQuantity: p.stockQuantity,
+          category: "Body Care",
+        };
+      });
+      const hairProducts = results[2].map(function (p: any) {
+        return {
+          productId: p.productId,
+          name: p.name,
+          price: p.price,
+          stockQuantity: p.stockQuantity,
+          category: "Hair Care",
+        };
+      });
+
+      setProducts(skinProducts.concat(bodyProducts, hairProducts));
+    });
+  }
+
+  function loadCustomers() {
+    fetch("http://localhost:8080/customer/getAll")
+      .then((r) => r.json())
+      .then((data) => setCustomers(data));
+  }
+
+  function loadReviews() {
+    fetch("http://localhost:8080/review/getAll")
+      .then((r) => r.json())
+      .then((data) => setReviews(data));
+  }
+
+  function loadOrders() {
+    fetch("http://localhost:8080/order/getAll")
+      .then((r) => r.json())
+      .then((data) => setOrders(data));
+  }
+
+  function loadStats() {
+    fetch("http://localhost:8080/dashboard/stats")
+      .then((r) => r.json())
+      .then((data) => setStats(data));
+  }
+
+  useEffect(function () {
+    loadProducts();
+    loadCustomers();
+    loadReviews();
+    loadOrders();
+    loadStats();
+  }, []);
+
+  function getEndpointForCategory(category: string) {
+    if (category === "Skin Care") return "skincare";
+    if (category === "Body Care") return "bodycare";
+    return "haircare";
+  }
+
+  function handleDeleteProduct(product: ProductData) {
+    const endpoint = getEndpointForCategory(product.category);
+
+    fetch(
+      "http://localhost:8080/" + endpoint + "/delete/" + product.productId,
+      {
+        method: "DELETE",
+      },
+    ).then(function () {
+      loadProducts();
+      loadStats();
+    });
+  }
+
+  function handleDeleteCustomer(customerId: number) {
+    fetch("http://localhost:8080/customer/delete/" + customerId, {
+      method: "DELETE",
+    }).then(function () {
+      loadCustomers();
+      loadStats();
+    });
+  }
+
+  function handleDeleteReview(reviewId: number) {
+    fetch("http://localhost:8080/review/delete/" + reviewId, {
+      method: "DELETE",
+    }).then(function () {
+      loadReviews();
+      loadStats();
+    });
+  }
+
+  // Change an order's status when the admin picks a new option from the dropdown
+  function handleStatusChange(orderId: number, newStatus: string) {
+    fetch("http://localhost:8080/order/updateStatus", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: orderId, status: newStatus }),
+    }).then(function () {
+      loadOrders();
+    });
+  }
+
+  function handleAddProduct(e: React.FormEvent) {
+    e.preventDefault();
+
+    const endpoint = newCategory;
+
+    const productData: any = {
+      name: newName,
+      description: newDescription,
+      brand: newBrand,
+      price: parseFloat(newPrice),
+      stockQuantity: parseInt(newStock),
+      imageUrl: newImageUrl,
+      volumeMl: parseInt(newVolumeMl),
+    };
+
+    if (newCategory === "skincare") {
+      productData.usageInstructions = newExtraInfo;
+    } else if (newCategory === "bodycare") {
+      productData.skinConcern = newExtraInfo;
+    } else {
+      productData.hairConcern = newExtraInfo;
+    }
+
+    fetch("http://localhost:8080/" + endpoint + "/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(productData),
+    }).then(function () {
+      setNewName("");
+      setNewDescription("");
+      setNewBrand("");
+      setNewPrice("");
+      setNewStock("");
+      setNewImageUrl("");
+      setNewVolumeMl("");
+      setNewExtraInfo("");
+
+      loadProducts();
+      loadStats();
+    });
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("customer");
+    navigate("/login");
+  }
 
   return (
     <div className="admin-page">
       <div className="admin-layout">
-
-        {/* ---------- SIDEBAR ---------- */}
         <aside className="sidebar">
           <div className="logo">RadiantSkin</div>
           <div className="role-tag">Admin Panel</div>
 
           <nav>
-            {NAV_ITEMS.map((item) => (
-              <div
-                key={item.id}
-                className={`nav-item ${activeView === item.id ? 'active' : ''}`}
-                onClick={() => setActiveView(item.id)}
-              >
-                <span className="icon">{item.icon}</span> {item.label}
-              </div>
-            ))}
+            {NAV_ITEMS.map(function (item) {
+              return (
+                <div
+                  key={item.id}
+                  className={
+                    "nav-item " + (activeView === item.id ? "active" : "")
+                  }
+                  onClick={() => setActiveView(item.id)}
+                >
+                  {item.label}
+                </div>
+              );
+            })}
           </nav>
 
           <div className="logout">
-            <div className="nav-item" onClick={() => navigate('/login')}>
-              <span className="icon">↩</span> Logout
+            <div className="nav-item" onClick={handleLogout}>
+              Logout
             </div>
           </div>
         </aside>
 
-        {/* ---------- MAIN CONTENT ---------- */}
         <main className="main">
-
-          {activeView === 'dashboard' && (
+          {activeView === "dashboard" && (
             <section>
               <div className="main-header">
                 <div>
                   <h1>Dashboard Overview</h1>
                   <p>Welcome back, here's what's happening today.</p>
                 </div>
-                <div className="admin-avatar">A</div>
               </div>
 
               <div className="stat-grid">
                 <div className="stat-card">
-                  <div className="stat-icon">🛍</div>
                   <div className="stat-label">Total Products</div>
-                  <div className="stat-value">184</div>
+                  <div className="stat-value">{stats.totalProducts}</div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-icon">👥</div>
                   <div className="stat-label">Total Customers</div>
-                  <div className="stat-value">2,340</div>
+                  <div className="stat-value">{stats.totalCustomers}</div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-icon">📦</div>
+                  <div className="stat-label">Total Reviews</div>
+                  <div className="stat-value">{stats.totalReviews}</div>
+                </div>
+                <div className="stat-card">
                   <div className="stat-label">Total Orders</div>
-                  <div className="stat-value">1,027</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-icon">💰</div>
-                  <div className="stat-label">Total Sales</div>
-                  <div className="stat-value">R412,900</div>
+                  <div className="stat-value">{orders.length}</div>
                 </div>
               </div>
 
               <div className="panel">
-                <div className="panel-head"><h3>Recent Orders</h3></div>
-                <table>
-                  <thead>
-                    <tr><th>Order ID</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>#RS-1042</td><td>Naledi Mokoena</td><td>03 Aug 2026</td><td>R689</td><td><span className="pill pill-success">Delivered</span></td></tr>
-                    <tr><td>#RS-1041</td><td>Thabo Khumalo</td><td>03 Aug 2026</td><td>R289</td><td><span className="pill pill-primary">Processing</span></td></tr>
-                    <tr><td>#RS-1040</td><td>Amahle Peters</td><td>02 Aug 2026</td><td>R1,120</td><td><span className="pill pill-success">Delivered</span></td></tr>
-                    <tr><td>#RS-1039</td><td>Sipho Dlamini</td><td>02 Aug 2026</td><td>R199</td><td><span className="pill pill-danger">Cancelled</span></td></tr>
-                  </tbody>
-                </table>
+                <div className="panel-head">
+                  <h3>Recent Orders</h3>
+                </div>
+
+                {orders.length === 0 && (
+                  <p style={{ color: "#6b7280" }}>No orders yet.</p>
+                )}
+
+                {orders.length > 0 && (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.slice(0, 5).map(function (order) {
+                        return (
+                          <tr key={order.orderId}>
+                            <td>#{order.orderId}</td>
+                            <td>
+                              {order.customer.firstName}{" "}
+                              {order.customer.lastName}
+                            </td>
+                            <td>
+                              {new Date(order.orderDate).toLocaleDateString()}
+                            </td>
+                            <td>R{order.totalAmount}</td>
+                            <td>{order.status}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </section>
           )}
 
-          {activeView === 'products' && (
+          {activeView === "products" && (
             <section>
               <div className="main-header">
                 <div>
                   <h1>Products</h1>
                   <p>Manage your Skin, Body, and Hair Care catalogue.</p>
                 </div>
-                <button className="btn btn-primary">+ Add Product</button>
+              </div>
+
+              <div className="panel" style={{ marginBottom: 24 }}>
+                <div className="panel-head">
+                  <h3>Add New Product</h3>
+                </div>
+
+                <form onSubmit={handleAddProduct}>
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                    >
+                      <option value="skincare">Skin Care</option>
+                      <option value="bodycare">Body Care</option>
+                      <option value="haircare">Hair Care</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Name</label>
+                    <input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Description</label>
+                    <input
+                      value={newDescription}
+                      onChange={(e) => setNewDescription(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Brand</label>
+                    <input
+                      value={newBrand}
+                      onChange={(e) => setNewBrand(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Price (R)</label>
+                    <input
+                      type="number"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Stock Quantity</label>
+                    <input
+                      type="number"
+                      value={newStock}
+                      onChange={(e) => setNewStock(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Volume (ml)</label>
+                    <input
+                      type="number"
+                      value={newVolumeMl}
+                      onChange={(e) => setNewVolumeMl(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Image URL</label>
+                    <input
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Extra Info (usage instructions / concern)</label>
+                    <input
+                      value={newExtraInfo}
+                      onChange={(e) => setNewExtraInfo(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <button type="submit" className="btn btn-primary">
+                    Add Product
+                  </button>
+                </form>
               </div>
 
               <div className="panel">
                 <table>
                   <thead>
-                    <tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
+                    <tr>
+                      <th>Product</th>
+                      <th>Category</th>
+                      <th>Price</th>
+                      <th>Stock</th>
+                      <th>Actions</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    <tr><td>Whipped Shea Body Butter</td><td>Body Care</td><td>R289</td><td>142</td>
-                      <td className="table-actions"><button className="icon-btn">✎</button><button className="icon-btn">🗑</button></td></tr>
-                    <tr><td>Keratin Repair Shampoo</td><td>Hair Care</td><td>R219</td><td>76</td>
-                      <td className="table-actions"><button className="icon-btn">✎</button><button className="icon-btn">🗑</button></td></tr>
-                    <tr><td>Vitamin C Face Serum</td><td>Skin Care</td><td>R399</td><td>58</td>
-                      <td className="table-actions"><button className="icon-btn">✎</button><button className="icon-btn">🗑</button></td></tr>
-                    <tr><td>Argan Shine Hair Oil</td><td>Hair Care</td><td>R289</td><td>0</td>
-                      <td className="table-actions"><button className="icon-btn">✎</button><button className="icon-btn">🗑</button></td></tr>
+                    {products.map(function (product) {
+                      return (
+                        <tr key={product.productId}>
+                          <td>{product.name}</td>
+                          <td>{product.category}</td>
+                          <td>R{product.price}</td>
+                          <td>{product.stockQuantity}</td>
+                          <td className="table-actions">
+                            <button
+                              className="icon-btn"
+                              onClick={() => handleDeleteProduct(product)}
+                            >
+                              🗑
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </section>
           )}
 
-          {activeView === 'customers' && (
+          {activeView === "customers" && (
             <section>
               <div className="main-header">
                 <div>
@@ -136,30 +497,43 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="search-bar">
-                <input type="text" placeholder="Search customers by name or email..." />
-                <button className="btn btn-outline">Search</button>
-              </div>
-
               <div className="panel">
                 <table>
                   <thead>
-                    <tr><th>Name</th><th>Email</th><th>Joined</th><th>Orders</th><th>Actions</th></tr>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Actions</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    <tr><td>Naledi Mokoena</td><td>naledi.m@email.com</td><td>14 Jan 2026</td><td>12</td>
-                      <td className="table-actions"><button className="icon-btn">🗑</button></td></tr>
-                    <tr><td>Thabo Khumalo</td><td>thabo.k@email.com</td><td>02 Feb 2026</td><td>4</td>
-                      <td className="table-actions"><button className="icon-btn">🗑</button></td></tr>
-                    <tr><td>Amahle Peters</td><td>amahle.p@email.com</td><td>19 Mar 2026</td><td>9</td>
-                      <td className="table-actions"><button className="icon-btn">🗑</button></td></tr>
+                    {customers.map(function (customer) {
+                      return (
+                        <tr key={customer.userId}>
+                          <td>
+                            {customer.firstName} {customer.lastName}
+                          </td>
+                          <td>{customer.email}</td>
+                          <td className="table-actions">
+                            <button
+                              className="icon-btn"
+                              onClick={() =>
+                                handleDeleteCustomer(customer.userId)
+                              }
+                            >
+                              🗑
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </section>
           )}
 
-          {activeView === 'orders' && (
+          {activeView === "orders" && (
             <section>
               <div className="main-header">
                 <div>
@@ -168,27 +542,63 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="panel">
-                <table>
-                  <thead>
-                    <tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>#RS-1042</td><td>Naledi Mokoena</td><td>3</td><td>R689</td><td><span className="pill pill-success">Delivered</span></td>
-                      <td className="table-actions"><button className="icon-btn">👁</button></td></tr>
-                    <tr><td>#RS-1041</td><td>Thabo Khumalo</td><td>1</td><td>R289</td><td><span className="pill pill-primary">Processing</span></td>
-                      <td className="table-actions"><button className="icon-btn">👁</button></td></tr>
-                    <tr><td>#RS-1040</td><td>Amahle Peters</td><td>4</td><td>R1,120</td><td><span className="pill pill-success">Delivered</span></td>
-                      <td className="table-actions"><button className="icon-btn">👁</button></td></tr>
-                    <tr><td>#RS-1039</td><td>Sipho Dlamini</td><td>1</td><td>R199</td><td><span className="pill pill-danger">Cancelled</span></td>
-                      <td className="table-actions"><button className="icon-btn">👁</button></td></tr>
-                  </tbody>
-                </table>
-              </div>
+              {orders.length === 0 && (
+                <div className="panel">
+                  <p style={{ color: "#6b7280" }}>No orders yet.</p>
+                </div>
+              )}
+
+              {orders.length > 0 && (
+                <div className="panel">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map(function (order) {
+                        return (
+                          <tr key={order.orderId}>
+                            <td>#{order.orderId}</td>
+                            <td>
+                              {order.customer.firstName}{" "}
+                              {order.customer.lastName}
+                            </td>
+                            <td>{order.orderItems.length}</td>
+                            <td>R{order.totalAmount}</td>
+                            <td>
+                              <select
+                                value={order.status}
+                                onChange={(e) =>
+                                  handleStatusChange(
+                                    order.orderId,
+                                    e.target.value,
+                                  )
+                                }
+                              >
+                                <option value="PENDING">Pending</option>
+                                <option value="PROCESSING">Processing</option>
+                                <option value="SHIPPED">Shipped</option>
+                                <option value="DELIVERED">Delivered</option>
+                                <option value="CANCELLED">Cancelled</option>
+                              </select>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
 
-          {activeView === 'payments' && (
+          {activeView === "payments" && (
             <section>
               <div className="main-header">
                 <div>
@@ -196,24 +606,16 @@ function AdminDashboard() {
                   <p>Review payment transactions and their status.</p>
                 </div>
               </div>
-
               <div className="panel">
-                <table>
-                  <thead>
-                    <tr><th>Transaction ID</th><th>Order</th><th>Method</th><th>Amount</th><th>Status</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>TXN-88213</td><td>#RS-1042</td><td>Card</td><td>R689</td><td><span className="pill pill-success">Paid</span></td></tr>
-                    <tr><td>TXN-88214</td><td>#RS-1041</td><td>EFT</td><td>R289</td><td><span className="pill pill-primary">Pending</span></td></tr>
-                    <tr><td>TXN-88215</td><td>#RS-1040</td><td>Card</td><td>R1,120</td><td><span className="pill pill-success">Paid</span></td></tr>
-                    <tr><td>TXN-88216</td><td>#RS-1039</td><td>Card</td><td>R199</td><td><span className="pill pill-danger">Refunded</span></td></tr>
-                  </tbody>
-                </table>
+                <p style={{ color: "#6b7280" }}>
+                  Payment tracking is not connected yet — coming in the next
+                  phase.
+                </p>
               </div>
             </section>
           )}
 
-          {activeView === 'reviews' && (
+          {activeView === "reviews" && (
             <section>
               <div className="main-header">
                 <div>
@@ -225,21 +627,43 @@ function AdminDashboard() {
               <div className="panel">
                 <table>
                   <thead>
-                    <tr><th>Customer</th><th>Product</th><th>Rating</th><th>Comment</th><th>Actions</th></tr>
+                    <tr>
+                      <th>Customer</th>
+                      <th>Product</th>
+                      <th>Rating</th>
+                      <th>Comment</th>
+                      <th>Actions</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    <tr><td>Naledi M.</td><td>Shea Body Butter</td><td>★★★★★</td><td>Absorbs so fast, love the smell.</td>
-                      <td className="table-actions"><button className="icon-btn">🗑</button></td></tr>
-                    <tr><td>Thabo K.</td><td>Keratin Shampoo</td><td>★★★★☆</td><td>Good but wish it lasted longer.</td>
-                      <td className="table-actions"><button className="icon-btn">🗑</button></td></tr>
-                    <tr><td>Guest0912</td><td>Vitamin C Serum</td><td>★☆☆☆☆</td><td>Spam / inappropriate content</td>
-                      <td className="table-actions"><button className="icon-btn">🗑</button></td></tr>
+                    {reviews.map(function (review) {
+                      return (
+                        <tr key={review.reviewId}>
+                          <td>
+                            {review.customer.firstName}{" "}
+                            {review.customer.lastName}
+                          </td>
+                          <td>{review.product.name}</td>
+                          <td>{review.rating} / 5</td>
+                          <td>{review.comment}</td>
+                          <td className="table-actions">
+                            <button
+                              className="icon-btn"
+                              onClick={() =>
+                                handleDeleteReview(review.reviewId)
+                              }
+                            >
+                              🗑
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </section>
           )}
-
         </main>
       </div>
     </div>

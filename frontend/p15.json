@@ -1,0 +1,10 @@
+﻿{
+    "name": "Leave-In Hair Treatment Spray",
+    "description": "Lightweight spray that protects and adds shine without weighing hair down.",
+    "brand": "RadiantSkin",
+    "price": 229.00,
+    "stockQuantity": 30,
+    "imageUrl": "/images/Hair Care5.png",
+    "volumeMl": 150,
+    "hairConcern": "Frizz"
+}

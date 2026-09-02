@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 function Home() {
+  const navigate = useNavigate();
+
   return (
     <>
       <Navbar />
@@ -10,25 +12,19 @@ function Home() {
       <section className="section">
         <div className="container hero">
           <div>
-            <span className="eyebrow">Skin, Body &amp; Hair</span>
+            <span className="eyebrow">Facial, Body &amp; Hair</span>
             <h1>Skincare made simple, honest, and effective.</h1>
             <p>
-              Dermatologist-tested formulas across skin, body, and hair — free
+              Dermatologist-tested formulas across facial, body, and hair — free
               from harsh chemicals, priced for everyday use.
             </p>
             <div className="hero-actions">
               <Link to="/shop/body-care" className="btn btn-primary">
                 Shop Now
               </Link>
-              <Link to="/about" className="btn btn-outline">
-                Learn More
-              </Link>
             </div>
           </div>
-          <img
-            src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=700&q=80"
-            alt="RadiantSkin hero"
-          />
+          <img src="/images/Hero Image.png" alt="RadiantSkin hero" />
         </div>
       </section>
 
@@ -39,28 +35,19 @@ function Home() {
           <p className="section-sub">Three ranges, one standard of quality.</p>
           <div className="category-grid">
             <Link to="/shop/skin-care" className="category-card">
-              <img
-                src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&q=80"
-                alt="Skin Care"
-              />
+              <img src="/images/Facial Care1.png" alt="Facial Care" />
               <div className="category-overlay">
-                <h3>Skin Care</h3>
+                <h3>Facial Care</h3>
               </div>
             </Link>
             <Link to="/shop/body-care" className="category-card">
-              <img
-                src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=500&q=80"
-                alt="Body Care"
-              />
+              <img src="/images/Body Care1.png" alt="Body Care" />
               <div className="category-overlay">
                 <h3>Body Care</h3>
               </div>
             </Link>
             <Link to="/shop/hair-care" className="category-card">
-              <img
-                src="https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=500&q=80"
-                alt="Hair Care"
-              />
+              <img src="/images/Hair Care1.png" alt="Hair Care" />
               <div className="category-overlay">
                 <h3>Hair Care</h3>
               </div>
@@ -106,65 +93,64 @@ function Home() {
           <div className="featured-grid">
             <div className="product-card card">
               <img
-                src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&q=80"
+                src="/images/Body Care2.png"
                 alt="Whipped Shea Body Butter"
               />
               <div className="product-info">
                 <h4>Whipped Shea Body Butter</h4>
                 <div className="product-price">R289</div>
                 <div className="product-actions">
-                  <Link to="/product/1" className="btn btn-outline">
-                    View Details
-                  </Link>
-                  <button className="btn btn-primary">Add to Cart</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate("/login")}
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </div>
             <div className="product-card card">
-              <img
-                src="https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=400&q=80"
-                alt="Keratin Repair Shampoo"
-              />
+              <img src="/images/Hair Care2.png" alt="Keratin Repair Shampoo" />
               <div className="product-info">
                 <h4>Keratin Repair Shampoo</h4>
                 <div className="product-price">R219</div>
                 <div className="product-actions">
-                  <Link to="/product/9" className="btn btn-outline">
-                    View Details
-                  </Link>
-                  <button className="btn btn-primary">Add to Cart</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate("/login")}
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </div>
             <div className="product-card card">
-              <img
-                src="https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=400&q=80"
-                alt="Vitamin C Body Serum"
-              />
+              <img src="/images/Facial Care2.png" alt="Vitamin C Face Serum" />
               <div className="product-info">
-                <h4>Vitamin C Body Serum</h4>
+                <h4>Vitamin C Face Serum</h4>
                 <div className="product-price">R349</div>
                 <div className="product-actions">
-                  <Link to="/product/7" className="btn btn-outline">
-                    View Details
-                  </Link>
-                  <button className="btn btn-primary">Add to Cart</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate("/login")}
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </div>
             <div className="product-card card">
-              <img
-                src="https://images.unsplash.com/photo-1626015449059-fabbaea6c993?w=400&q=80"
-                alt="Argan Shine Hair Oil"
-              />
+              <img src="/images/Hair Care3.png" alt="Argan Shine Hair Oil" />
               <div className="product-info">
                 <h4>Argan Shine Hair Oil</h4>
                 <div className="product-price">R289</div>
                 <div className="product-actions">
-                  <Link to="/product/11" className="btn btn-outline">
-                    View Details
-                  </Link>
-                  <button className="btn btn-primary">Add to Cart</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate("/login")}
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             </div>
@@ -172,12 +158,9 @@ function Home() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" id="about">
         <div className="container about-preview">
-          <img
-            src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=700&q=80"
-            alt="About RadiantSkin"
-          />
+          <img src="/images/About Section Image.png" alt="About RadiantSkin" />
           <div>
             <span className="eyebrow">About RadiantSkin</span>
             <h2 className="section-title">Honest skincare, made simple</h2>
@@ -186,9 +169,6 @@ function Home() {
               accessible — no guesswork, no filler ingredients, just results you
               can feel.
             </p>
-            <Link to="/about" className="btn btn-primary">
-              Read Our Story
-            </Link>
           </div>
         </div>
       </section>

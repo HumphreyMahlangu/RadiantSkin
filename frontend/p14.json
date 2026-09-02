@@ -1,0 +1,10 @@
+﻿{
+    "name": "Intensive Hair Repair Mask",
+    "description": "Deep treatment mask that restores strength to damaged hair.",
+    "brand": "RadiantSkin",
+    "price": 259.00,
+    "stockQuantity": 25,
+    "imageUrl": "/images/Hair Care4.png",
+    "volumeMl": 200,
+    "hairConcern": "Damage"
+}

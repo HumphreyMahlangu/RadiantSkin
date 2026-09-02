@@ -15,14 +15,7 @@ function Navbar() {
           </Link>
         </li>
         <li>
-          <Link to="/shop" className={isActive("/shop")}>
-            Shop
-          </Link>
-        </li>
-        <li>
-          <Link to="/about" className={isActive("/about")}>
-            About Us
-          </Link>
+          <a href="/about">About Us</a>
         </li>
       </ul>
       <div className="nav-cta">

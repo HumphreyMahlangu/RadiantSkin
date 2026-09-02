@@ -1,0 +1,10 @@
+﻿{
+    "name": "Hydrating Facial Cleanser",
+    "description": "A gentle daily cleanser that hydrates while it cleans.",
+    "brand": "RadiantSkin",
+    "price": 249.00,
+    "stockQuantity": 50,
+    "imageUrl": "/images/Facial Care1.png",
+    "volumeMl": 150,
+    "usageInstructions": "Apply to damp skin, massage gently, rinse with warm water."
+}

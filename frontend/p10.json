@@ -1,0 +1,10 @@
+﻿{
+    "name": "Exfoliating Body Scrub",
+    "description": "Sugar-based scrub that buffs away dry, rough skin.",
+    "brand": "RadiantSkin",
+    "price": 219.00,
+    "stockQuantity": 30,
+    "imageUrl": "/images/Body Care3.png",
+    "volumeMl": 250,
+    "skinConcern": "Roughness"
+}

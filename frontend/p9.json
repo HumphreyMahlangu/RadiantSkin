@@ -1,0 +1,10 @@
+﻿{
+    "name": "Soothing Overnight Face Mask",
+    "description": "A calming mask that restores and hydrates skin while you sleep.",
+    "brand": "RadiantSkin",
+    "price": 279.00,
+    "stockQuantity": 25,
+    "imageUrl": "/images/Facial Care5.png",
+    "volumeMl": 75,
+    "usageInstructions": "Apply a thin layer before bed, leave on overnight, rinse in the morning."
+}
