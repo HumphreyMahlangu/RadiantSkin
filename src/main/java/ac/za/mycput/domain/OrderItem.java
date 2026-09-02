@@ -9,6 +9,7 @@
 package ac.za.mycput.domain;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 
@@ -21,6 +22,7 @@ public class OrderItem {
     private int quantity;
     private BigDecimal unitPrice;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;

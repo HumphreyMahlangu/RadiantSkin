@@ -20,7 +20,7 @@ import java.util.UUID;
 public class CheckoutService implements ICheckoutService {
 
     private final ICartService cartService;
-    private final CartItemService cartItemService;
+    private final ICartItemService cartItemService;
     private final IOrderService orderService;
     private final IOrderItemService orderItemService;
     private final IProductService productService;
@@ -28,7 +28,7 @@ public class CheckoutService implements ICheckoutService {
 
     @Autowired
     public CheckoutService(ICartService cartService,
-                           CartItemService cartItemService,
+                           ICartItemService cartItemService,
                            IOrderService orderService,
                            IOrderItemService orderItemService,
                            IProductService productService,

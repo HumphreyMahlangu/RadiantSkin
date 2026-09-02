@@ -6,11 +6,12 @@ package ac.za.mycput.service;
 
 import ac.za.mycput.domain.Review;
 import java.util.List;
-import java.util.Optional;
-
-
-import ac.za.mycput.domain.Review;
 
 public interface IReviewService extends IService<Review, Long> {
 
+    List<Review> findByProductId(Long productId);
+
+    List<Review> findByCustomerId(Long customerId);
+
+    Review addReview(Long customerId, Long productId, int rating, String comment);
 }

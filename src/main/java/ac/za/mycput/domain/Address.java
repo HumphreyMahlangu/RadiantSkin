@@ -1,10 +1,11 @@
 package ac.za.mycput.domain;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 /*
-* Name: Siphokazi Malingatshoni
-* Student Number: 222868708
-* Date:2026/06/21
-*/
+ * Name: Siphokazi Malingatshoni
+ * Student Number: 222868708
+ * Date:2026/06/21
+ */
 
 @Entity
 public class Address {
@@ -19,9 +20,10 @@ public class Address {
     private String postalCode;
     private String country ;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "customer_id")
-    private Customer customer;// link with customer class when available
+    private Customer customer;
 
     public Address() {
     }
@@ -132,14 +134,14 @@ public class Address {
         }
 
         public Builder copy(Address address){
-        this.addressId = address.addressId;
-        this.street = address.street;
-        this.city = address.city;
-        this.province = address.province;
-        this.postalCode = address.postalCode;
-        this.country = address.country;
-        this.customer = address.customer;
-        return this;
+            this.addressId = address.addressId;
+            this.street = address.street;
+            this.city = address.city;
+            this.province = address.province;
+            this.postalCode = address.postalCode;
+            this.country = address.country;
+            this.customer = address.customer;
+            return this;
 
         }
         public Address build(){

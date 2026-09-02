@@ -5,11 +5,11 @@ package ac.za.mycput.service;
  */
 import ac.za.mycput.domain.Address;
 import java.util.List;
-import java.util.Optional;
-
-import ac.za.mycput.domain.Address;
 
 public interface IAddressService extends IService<Address, Long> {
 
+    List<Address> findByCustomerId(Long customerId);
+
+    Address addAddress(Long customerId, String street, String city, String province, String postalCode, String country);
 }
 
