@@ -1,0 +1,10 @@
+﻿{
+    "name": "Hydrating Body Lotion",
+    "description": "Lightweight, fast-absorbing lotion for all-day moisture.",
+    "brand": "RadiantSkin",
+    "price": 199.00,
+    "stockQuantity": 50,
+    "imageUrl": "/images/Body Care4.png",
+    "volumeMl": 300,
+    "skinConcern": "Dehydration"
+}

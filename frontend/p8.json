@@ -1,0 +1,10 @@
+﻿{
+    "name": "Exfoliating Face Scrub",
+    "description": "Gentle exfoliant that smooths texture and reveals brighter skin.",
+    "brand": "RadiantSkin",
+    "price": 199.00,
+    "stockQuantity": 35,
+    "imageUrl": "/images/Facial Care4.png",
+    "volumeMl": 100,
+    "usageInstructions": "Use 2-3 times a week on damp skin, massage gently and rinse."
+}

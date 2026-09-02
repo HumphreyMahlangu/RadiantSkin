@@ -1,0 +1,10 @@
+﻿{
+    "name": "Test Serum",
+    "description": "Testing the admin add product form.",
+    "brand": "RadiantSkin",
+    "price": 199.00,
+    "stockQuantity": 20,
+    "imageUrl": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600",
+    "volumeMl": 30,
+    "usageInstructions": "Apply daily."
+}

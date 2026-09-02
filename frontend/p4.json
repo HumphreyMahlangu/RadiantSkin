@@ -1,0 +1,10 @@
+﻿{
+    "name": "Nourishing Body Oil",
+    "description": "Lightweight oil that absorbs fast, leaving skin soft and glowing.",
+    "brand": "RadiantSkin",
+    "price": 259.00,
+    "stockQuantity": 35,
+    "imageUrl": "/images/Body Care2.png",
+    "volumeMl": 100,
+    "skinConcern": "Dullness"
+}

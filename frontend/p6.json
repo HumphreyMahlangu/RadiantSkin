@@ -1,0 +1,10 @@
+﻿{
+    "name": "Argan Shine Hair Oil",
+    "description": "Lightweight oil that smooths frizz and adds a natural shine.",
+    "brand": "RadiantSkin",
+    "price": 249.00,
+    "stockQuantity": 35,
+    "imageUrl": "/images/Hair Care2.png",
+    "volumeMl": 100,
+    "hairConcern": "Frizz"
+}

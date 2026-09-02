@@ -1,0 +1,10 @@
+﻿{
+    "name": "Vitamin C Face Serum",
+    "description": "Brightening serum to even skin tone and boost radiance.",
+    "brand": "RadiantSkin",
+    "price": 349.00,
+    "stockQuantity": 30,
+    "imageUrl": "/images/Facial Care2.png",
+    "volumeMl": 30,
+    "usageInstructions": "Apply a few drops every morning before moisturiser."
+}

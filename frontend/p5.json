@@ -1,0 +1,10 @@
+﻿{
+    "name": "Keratin Repair Shampoo",
+    "description": "Strengthening shampoo that repairs damaged, brittle hair.",
+    "brand": "RadiantSkin",
+    "price": 219.00,
+    "stockQuantity": 45,
+    "imageUrl": "/images/Hair Care1.png",
+    "volumeMl": 250,
+    "hairConcern": "Damage"
+}

@@ -1,0 +1,10 @@
+﻿{
+    "name": "Gentle Foaming Cleanser",
+    "description": "A soft foaming cleanser that removes impurities without stripping skin.",
+    "brand": "RadiantSkin",
+    "price": 229.00,
+    "stockQuantity": 40,
+    "imageUrl": "/images/Facial Care3.png",
+    "volumeMl": 150,
+    "usageInstructions": "Massage onto damp skin morning and night, rinse thoroughly."
+}

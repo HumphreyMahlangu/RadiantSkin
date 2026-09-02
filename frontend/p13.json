@@ -1,0 +1,10 @@
+﻿{
+    "name": "Hydrating Hair Conditioner",
+    "description": "Deeply conditions and detangles for softer, smoother hair.",
+    "brand": "RadiantSkin",
+    "price": 209.00,
+    "stockQuantity": 40,
+    "imageUrl": "/images/Hair Care3.png",
+    "volumeMl": 250,
+    "hairConcern": "Dryness"
+}

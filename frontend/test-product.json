@@ -1,0 +1,10 @@
+﻿{
+    "name": "Hydrating Cleanser",
+    "description": "A gentle daily cleanser that hydrates while it cleans.",
+    "brand": "RadiantSkin",
+    "price": 249.00,
+    "stockQuantity": 50,
+    "imageUrl": "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600",
+    "volumeMl": 150,
+    "usageInstructions": "Apply to damp skin, massage gently, rinse with warm water."
+}

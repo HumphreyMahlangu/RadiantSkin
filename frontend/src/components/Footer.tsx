@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link } from "react-router-dom";
 
 function Footer() {
   return (
@@ -8,10 +8,10 @@ function Footer() {
         <div className="footer-grid">
           <div>
             <h4>RadiantSkin</h4>
-            <p>Honest skincare for skin, body, and hair — formulated to work, priced to be worn every day.</p>
-            <div className="social-links">
-              <a href="#top">f</a><a href="#top">ig</a><a href="#top">x</a>
-            </div>
+            <p>
+              Honest skincare for skin, body, and hair — formulated to work,
+              priced to be worn every day.
+            </p>
           </div>
           <div>
             <h4>Contact</h4>
@@ -32,7 +32,9 @@ function Footer() {
             <Link to="/register">Sign Up</Link>
           </div>
         </div>
-        <div className="footer-bottom">© 2026 RadiantSkin. All rights reserved.</div>
+        <div className="footer-bottom">
+          © 2026 RadiantSkin. All rights reserved.
+        </div>
       </div>
     </footer>
   );

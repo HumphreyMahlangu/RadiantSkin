@@ -1,0 +1,10 @@
+﻿{
+    "name": "Whipped Shea Body Butter",
+    "description": "Rich, whipped body butter that melts into skin for deep hydration.",
+    "brand": "RadiantSkin",
+    "price": 289.00,
+    "stockQuantity": 40,
+    "imageUrl": "/images/Body Care1.png",
+    "volumeMl": 200,
+    "skinConcern": "Dryness"
+}
