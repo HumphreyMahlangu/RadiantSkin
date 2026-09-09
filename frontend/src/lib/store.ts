@@ -92,6 +92,7 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
     try {
       const response = await (fetcher ?? fetch)(`${baseUrl.replace(/\/$/, '')}${path}`, {
         headers: { Accept: 'application/json' },
+        cache: 'no-store',
         signal: AbortSignal.any([AbortSignal.timeout(15000), ...(signal ? [signal] : [])]),
       })
       if (!response.ok)

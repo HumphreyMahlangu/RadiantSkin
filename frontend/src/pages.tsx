@@ -25,14 +25,13 @@ import {
 import { useStore } from './StoreContext'
 import { categories, createApi, money } from './lib/store'
 import type { Order, Product } from './lib/store'
-import { isDemo } from './lib/config'
 
 export function HomePage() {
   const { products } = useStore()
   const categoryImages: Record<string, string> = {
-    skin: '/images/campaign-skin.jpg',
+    skin: '/images/campaign-woman.jpg',
     body: '/images/cream-texture.jpg',
-    hair: '/images/campaign-hair.jpg',
+    hair: '/images/campaign-man.jpg',
   }
   return (
     <>
@@ -69,11 +68,11 @@ export function HomePage() {
         <div className="hero-visual">
           <img
             className="campaign-image"
-            src="/images/campaign-skin.jpg"
-            alt="A close-up of a daily skin care routine"
+            src="/images/campaign-woman.jpg"
+            alt="A woman cleansing her cheek with a cotton pad in natural light"
             fetchPriority="high"
             width="1400"
-            height="2100"
+            height="2097"
           />
           <div className="campaign-caption">
             <span>The everyday edit</span>
@@ -816,12 +815,6 @@ export function OrdersPage() {
   useEffect(() => () => controller.current?.abort(), [])
   async function lookup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (isDemo) {
-      setError(
-        'Order tracking is unavailable in preview mode. Switch to the connected store to look up a real order.',
-      )
-      return
-    }
     const id = new FormData(event.currentTarget).get('orderId')?.toString().trim() || ''
     controller.current?.abort()
     const request = new AbortController()

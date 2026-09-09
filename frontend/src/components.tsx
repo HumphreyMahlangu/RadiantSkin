@@ -16,7 +16,9 @@ import type { Product } from './lib/store'
 export function ProductImage({ product }: { product: Product }) {
   const [failedUrl, setFailedUrl] = useState('')
   return (
-    <div className={`product-image image-${product.category}`}>
+    <div
+      className={`product-image image-${product.category}${product.imageUrl.startsWith('/images/products/') ? ' image-packshot' : ''}`}
+    >
       {product.imageUrl && failedUrl !== product.imageUrl ? (
         <img
           src={product.imageUrl}

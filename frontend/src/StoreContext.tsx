@@ -2,10 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ReactNode } from 'react'
 import { changeBag, createApi, readBag } from './lib/store'
 import type { BagItem, Product } from './lib/store'
-import { isDemo } from './lib/config'
 
 const api = createApi(import.meta.env.VITE_API_BASE_URL || '/api')
-const bagKey = isDemo ? 'radiantskin.preview-bag.v1' : 'radiantskin.bag.v1'
+const bagKey = 'radiantskin.bag.v1'
 type Store = {
   products: Product[]
   loading: boolean
@@ -33,22 +32,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   })
   useEffect(() => {
     const controller = new AbortController()
-    const request = isDemo
-      ? import('./lib/demo').then((module) => module.demoProducts)
-      : api.products(controller.signal)
-    request
+    api
+      .products(controller.signal)
       .then((result) => {
-        if (!controller.signal.aborted) setProducts(result)
+        if (!controller.signal.aborted) {
+          setProducts(result)
+          setError('')
+        }
       })
       .catch((error) => {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
+          setProducts([])
           setError(error instanceof Error ? error.message : 'The catalogue could not be loaded.')
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
       })
     return () => controller.abort()
   }, [version])
+  useEffect(() => {
+    const refresh = () => setVersion((value) => value + 1)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    const timer = window.setInterval(refresh, 30000)
+    window.addEventListener('focus', refresh)
+    window.addEventListener('online', refresh)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('online', refresh)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [])
   useEffect(() => {
     try {
       localStorage.setItem(bagKey, JSON.stringify(bag))

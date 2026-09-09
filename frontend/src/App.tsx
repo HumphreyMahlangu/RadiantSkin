@@ -11,7 +11,6 @@ import {
 } from 'react-router-dom'
 import { FiArrowRight, FiArrowUpRight, FiMenu, FiSearch, FiShoppingBag, FiX } from 'react-icons/fi'
 import { StoreProvider, useStore } from './StoreContext'
-import { isDemo } from './lib/config'
 import { useScrollReveal } from './useScrollReveal'
 import {
   HomePage,
@@ -43,11 +42,6 @@ function Shell() {
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      {isDemo && (
-        <div className="preview-banner" role="note">
-          Frontend preview · Sample products and prices · No orders or payments
-        </div>
-      )}
       <div className="announcement">
         <span>Skin. Body. Hair.</span>
         <span>Everyday care, considered.</span>

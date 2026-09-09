@@ -142,14 +142,6 @@ svg {
 .skip-link:focus {
   top: 12px;
 }
-.preview-banner {
-  text-align: center;
-  padding: 8px 20px;
-  color: #57524b;
-  background: #e8e3da;
-  font-size: 12px;
-  letter-spacing: 0.025em;
-}
 .announcement {
   min-height: 35px;
   padding: 10px var(--gutter);
@@ -405,7 +397,7 @@ svg {
   position: absolute;
   inset: 0;
   object-fit: cover;
-  object-position: 45% 37%;
+  object-position: 50% 48%;
 }
 .campaign-caption {
   position: absolute;
@@ -523,6 +515,14 @@ svg {
 .product-image-link:hover img {
   transform: scale(1.045);
 }
+.product-image.image-packshot {
+  background: #fff;
+}
+.image-packshot img {
+  object-fit: contain;
+  padding: 22px;
+  mix-blend-mode: normal;
+}
 .product-badge {
   position: absolute;
   top: 14px;
@@ -627,10 +627,10 @@ svg {
   transform: scale(1.035);
 }
 .category-skin img {
-  object-position: 25% 20%;
+  object-position: 50% 45%;
 }
 .category-hair img {
-  object-position: 50% 58%;
+  object-position: 50% 36%;
 }
 .category-number {
   position: absolute;
@@ -1429,10 +1429,6 @@ details p {
   .announcement > span:first-child {
     display: none;
   }
-  .preview-banner {
-    font-size: 11px;
-    padding: 7px 14px;
-  }
   .header {
     height: 72px;
     gap: 16px;
@@ -1499,7 +1495,7 @@ details p {
     aspect-ratio: 1.15;
   }
   .campaign-image {
-    object-position: 45% 36%;
+    object-position: 50% 42%;
   }
   .hero-description {
     margin-top: 28px;
