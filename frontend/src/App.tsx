@@ -1,34 +1,179 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import AboutUs from "./pages/AboutUs";
-import SkinCare from "./pages/SkinCare";
-import BodyCare from "./pages/BodyCare";
-import HairCare from "./pages/HairCare";
-import ProductDetails from "./pages/ProductDetails";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import CustomerDashboard from "./pages/CustomerDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import OrderConfirmation from "./pages/OrderConfirmation";
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import {
+  BrowserRouter,
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+import { FiArrowRight, FiArrowUpRight, FiMenu, FiSearch, FiShoppingBag, FiX } from 'react-icons/fi'
+import { StoreProvider, useStore } from './StoreContext'
+import { useScrollReveal } from './useScrollReveal'
+import {
+  HomePage,
+  ShopPage,
+  ProductPage,
+  BagPage,
+  CheckoutPage,
+  OrdersPage,
+  NotFoundPage,
+} from './pages'
 
-function App() {
+function Shell() {
+  const { count, notice } = useStore()
+  const [menu, setMenu] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const motionRoot = useScrollReveal(location.pathname)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [location.pathname])
+  function search(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const value = new FormData(event.currentTarget).get('search')?.toString().trim() || ''
+    navigate(`/shop${value ? `?q=${encodeURIComponent(value)}` : ''}`)
+    setMenu(false)
+  }
+  return (
+    <div className="storefront" ref={motionRoot}>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <div className="announcement">
+        <span>Considered essentials for your everyday.</span>
+        <span>South Africa / ZAR</span>
+      </div>
+      <div className="navigation-shell">
+        <header className="header">
+          <Link to="/" className="wordmark" aria-label="RadiantSkin home">
+            radiant<span>skin</span>
+            <small>EVERYDAY CARE</small>
+          </Link>
+          <nav className="desktop-nav" aria-label="Main navigation">
+            <NavLink to="/shop">Shop all</NavLink>
+            <Link to="/shop?category=skin">Skin care</Link>
+            <Link to="/shop?category=body">Body care</Link>
+            <Link to="/shop?category=hair">Hair care</Link>
+          </nav>
+          <div className="header-actions">
+            <Link className="track-link" to="/orders">
+              Track order
+            </Link>
+            <Link className="icon-button" to="/shop#search" aria-label="Search products">
+              <FiSearch />
+            </Link>
+            <Link className="bag-link" to="/bag" aria-label={`Shopping bag, ${count} items`}>
+              <FiShoppingBag />
+              <span>Bag</span>
+              <span className="bag-count" key={count}>
+                ({count})
+              </span>
+            </Link>
+            <button
+              className="icon-button menu-toggle"
+              aria-label={menu ? 'Close menu' : 'Open menu'}
+              aria-expanded={menu}
+              aria-controls="mobile-menu"
+              onClick={() => setMenu(!menu)}
+            >
+              {menu ? <FiX /> : <FiMenu />}
+            </button>
+          </div>
+        </header>
+        {menu && (
+          <div id="mobile-menu" className="mobile-menu">
+            <nav aria-label="Mobile navigation" onClick={() => setMenu(false)}>
+              <Link to="/shop">Shop all</Link>
+              <Link to="/shop?category=skin">Skin care</Link>
+              <Link to="/shop?category=body">Body care</Link>
+              <Link to="/shop?category=hair">Hair care</Link>
+              <Link to="/orders">Track order</Link>
+            </nav>
+            <form onSubmit={search}>
+              <label className="sr-only" htmlFor="mobile-search">
+                Search products
+              </label>
+              <input
+                id="mobile-search"
+                name="search"
+                placeholder="Find your next essential"
+                type="search"
+              />
+              <button className="icon-button" aria-label="Search">
+                <FiArrowRight />
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+      <main id="main" tabIndex={-1}>
+        <div className="route-content" key={location.pathname}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/shop" element={<ShopPage />} />
+            <Route path="/products/:id" element={<ProductPage />} />
+            <Route path="/bag" element={<BagPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </div>
+      </main>
+      <footer className="footer">
+        <div className="footer-directory" data-reveal>
+          <div className="footer-message">
+            <span className="eyebrow">Your skin. Your standards.</span>
+            <h2>
+              Good care starts
+              <br />
+              with <em>you.</em>
+            </h2>
+            <Link className="text-link" to="/shop">
+              Find your everyday <FiArrowUpRight />
+            </Link>
+          </div>
+          <div className="footer-links">
+            <span className="eyebrow">The collections</span>
+            <Link to="/shop">Shop all</Link>
+            <Link to="/shop?category=skin">Skin care</Link>
+            <Link to="/shop?category=body">Body care</Link>
+            <Link to="/shop?category=hair">Hair care</Link>
+          </div>
+          <div className="footer-links">
+            <span className="eyebrow">At your service</span>
+            <Link to="/bag">Your shopping bag</Link>
+            <Link to="/orders">Track your order</Link>
+            <p>
+              South Africa
+              <br />
+              Prices in ZAR
+            </p>
+          </div>
+        </div>
+        <div className="footer-signature" aria-hidden="true">
+          radiant skin
+        </div>
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} RadiantSkin</span>
+          <span>South Africa · ZAR</span>
+          <span>Every day. On your terms.</span>
+        </div>
+      </footer>
+      <div className={`toast ${notice ? 'visible' : ''}`} role="status" aria-live="polite">
+        {notice}
+      </div>
+    </div>
+  )
+}
+export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<AboutUs />} />
-        <Route path="/shop/skin-care" element={<SkinCare />} />
-        <Route path="/shop/body-care" element={<BodyCare />} />
-        <Route path="/shop/hair-care" element={<HairCare />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/order-confirmation" element={<OrderConfirmation />} />
-      </Routes>
+      <StoreProvider>
+        <Shell />
+      </StoreProvider>
     </BrowserRouter>
-  );
+  )
 }
-
-export default App;
