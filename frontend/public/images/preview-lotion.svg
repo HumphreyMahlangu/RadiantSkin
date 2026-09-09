@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 750">
+  <defs>
+    <linearGradient id="glass"><stop stop-color="#c9c3b9"/><stop offset=".18" stop-color="#e3ded5"/><stop offset=".45" stop-color="#f5f1e9"/><stop offset=".8" stop-color="#ded8cf"/><stop offset="1" stop-color="#b7b0a6"/></linearGradient>
+    <linearGradient id="cap"><stop stop-color="#252421"/><stop offset=".45" stop-color="#45443f"/><stop offset="1" stop-color="#1e1d1b"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="600" height="750" fill="#f4f2ed"/>
+  <ellipse cx="309" cy="641" rx="114" ry="13" fill="#242320" opacity=".14" filter="url(#shadow)"/>
+  <rect x="207" y="210" width="186" height="425" rx="19" fill="url(#glass)"/>
+  <rect x="208" y="208" width="184" height="18" rx="7" fill="#ccc5b9"/>
+  <rect x="210" y="126" width="180" height="88" rx="5" fill="url(#cap)"/>
+  <path d="M218 136v67m6-67v67m6-67v67m144-67v67m-6-67v67" stroke="#67655e" opacity=".4"/>
+  <rect x="216" y="305" width="168" height="220" fill="#f6f4ed"/>
+  <g fill="#242320" font-family="Arial,Helvetica,sans-serif">
+    <text x="231" y="339" font-size="17" font-weight="700" letter-spacing="-.7">RADIANTSKIN.</text>
+    <text x="231" y="385" font-size="9" letter-spacing="1.2">02 / BODY</text>
+    <text x="231" y="412" font-size="20" letter-spacing="-.8">Everyday</text>
+    <text x="231" y="437" font-size="20" letter-spacing="-.8">Body Lotion</text>
+    <path d="M231 469h138" stroke="#a6a198" stroke-width=".7"/>
+    <text x="231" y="497" font-size="9">250 ml</text>
+    <text x="369" y="497" font-size="8" text-anchor="end">DAILY CARE</text>
+  </g>
+  <path d="M221 232v57m0 250v71" stroke="#fff" stroke-width="3" opacity=".4"/>
+</svg>
