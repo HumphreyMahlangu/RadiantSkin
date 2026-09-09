@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { FiArrowRight, FiMinus, FiPlus, FiRefreshCw, FiShoppingBag } from 'react-icons/fi'
+import {
+  FiArrowRight,
+  FiArrowUpRight,
+  FiMinus,
+  FiPlus,
+  FiRefreshCw,
+  FiShoppingBag,
+} from 'react-icons/fi'
 import { useStore } from './StoreContext'
 import { categories, money } from './lib/store'
 import type { Product } from './lib/store'
@@ -34,9 +41,12 @@ export function ProductCard({ product }: { product: Product }) {
   const quantity = bag.find((item) => item.productId === product.productId)?.quantity || 0
   const unavailable = product.stockQuantity <= quantity || quantity >= 99
   return (
-    <article className="product-card">
+    <article className="product-card" data-reveal>
       <Link className="product-image-link" to={`/products/${product.productId}`}>
         <ProductImage product={product} />
+        <span className="product-discover" aria-hidden="true">
+          Discover <FiArrowUpRight />
+        </span>
         {product.stockQuantity === 0 && <span className="product-badge">Out of stock</span>}
       </Link>
       <div className="product-meta">

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import {
   FiArrowLeft,
+  FiArrowDown,
   FiArrowRight,
   FiArrowUpRight,
   FiCheck,
@@ -37,13 +38,16 @@ export function HomePage() {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">The everyday collection — 01</span>
+          <span className="eyebrow">Everyday essentials. Personally chosen.</span>
           <h1>
-            IN YOUR
-            <br />
-            OWN
-            <br />
-            <span>SKIN.</span>
+            <span className="hero-line">
+              <span>In your</span>
+            </span>
+            <span className="hero-line">
+              <span>
+                own <em>skin.</em>
+              </span>
+            </span>
           </h1>
           <div className="hero-description">
             <p>
@@ -56,8 +60,10 @@ export function HomePage() {
             </Link>
           </div>
           <div className="hero-footnote">
-            <span>Skin / Body / Hair</span>
-            <span>Made part of your day.</span>
+            <a className="scroll-cue" href="#collection">
+              Explore the edit <FiArrowDown aria-hidden="true" />
+            </a>
+            <span>01 / The everyday collection</span>
           </div>
         </div>
         <div className="hero-visual">
@@ -69,23 +75,28 @@ export function HomePage() {
             width="1400"
             height="2100"
           />
-          <span className="campaign-caption">THE EVERYDAY EDIT / RADIANTSKIN</span>
+          <div className="campaign-caption">
+            <span>The everyday edit</span>
+            <span>Skin / Body / Hair</span>
+          </div>
         </div>
       </section>
       <div className="editorial-intro">
-        <span className="eyebrow">A considered approach</span>
-        <p>
-          Less noise.
+        <span className="eyebrow" data-reveal>
+          A considered approach
+        </span>
+        <p data-reveal>
+          A daily essential.
           <br />
-          <span>More room for you.</span>
+          <span>A personal choice.</span>
         </p>
-        <div>
+        <div data-reveal>
           From your first cleanse to your final step. Explore skin, body, and hair care at your own
           pace.
         </div>
       </div>
-      <section className="section collection-section">
-        <div className="section-heading">
+      <section className="section collection-section" id="collection">
+        <div className="section-heading" data-reveal>
           <div>
             <span className="eyebrow">01 / The collection</span>
             <h2>The daily edit.</h2>
@@ -109,7 +120,7 @@ export function HomePage() {
         </CatalogueStatus>
       </section>
       <section className="section categories-section">
-        <div className="section-heading">
+        <div className="section-heading" data-reveal>
           <div>
             <span className="eyebrow">02 / Find your focus</span>
             <h2>Every part of you.</h2>
@@ -122,6 +133,7 @@ export function HomePage() {
               to={`/shop?category=${category.id}`}
               className={`category-card category-${category.id}`}
               key={category.id}
+              data-reveal
             >
               <div className="category-photo">
                 <img
@@ -142,7 +154,7 @@ export function HomePage() {
         </div>
       </section>
       <section className="manifesto">
-        <div className="manifesto-photo">
+        <div className="manifesto-photo" data-reveal="image">
           <img
             src="/images/cream-texture.jpg"
             alt="The texture of a cream in natural light"
@@ -151,14 +163,14 @@ export function HomePage() {
             height="1490"
           />
         </div>
-        <div className="manifesto-copy">
+        <div className="manifesto-copy" data-reveal>
           <span className="eyebrow">03 / A different pace</span>
           <h2>
-            GOOD CARE.
+            Good care.
             <br />
-            ON YOUR
+            On your
             <br />
-            <span>TERMS.</span>
+            <span>terms.</span>
           </h2>
           <p>
             Build a routine around your needs, your preferences, and the time you have. Choose what
@@ -213,7 +225,7 @@ export function ShopPage() {
     <div className="page section">
       <div className="page-heading">
         <span className="eyebrow">The RadiantSkin collection</span>
-        <h1>THE COLLECTION.</h1>
+        <h1>The collection.</h1>
         <p>Skin, body, and hair care. A routine that’s entirely yours.</p>
       </div>
       <div className="shop-toolbar">
@@ -436,7 +448,7 @@ export function BagPage() {
     <section className="section page">
       <div className="page-heading">
         <span className="eyebrow">Your everyday essentials</span>
-        <h1>YOUR BAG.</h1>
+        <h1>Your bag.</h1>
       </div>
       {!bag.length ? (
         <EmptyState title="Your bag is waiting for a little care" action={<ShopLink />}>
@@ -591,7 +603,7 @@ export function CheckoutPage() {
       </Link>
       <div className="page-heading">
         <span className="eyebrow">The final details</span>
-        <h1>CHECKOUT.</h1>
+        <h1>Checkout.</h1>
       </div>
       {!bag.length ? (
         <EmptyState title="Start with a little care" action={<ShopLink />}>
@@ -835,7 +847,7 @@ export function OrdersPage() {
     <section className="section page orders-page">
       <div className="page-heading">
         <span className="eyebrow">Keep up with your order</span>
-        <h1>ORDER STATUS.</h1>
+        <h1>Order status.</h1>
         <p>Enter your order number to see its latest status.</p>
       </div>
       <form className="order-lookup" onSubmit={lookup}>

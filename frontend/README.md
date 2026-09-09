@@ -13,7 +13,9 @@ npm.cmd run dev:demo
 
 Open http://localhost:5173. Preview mode uses six clearly labelled sample products with illustrative stock photography and local SVG packaging. It never calls the backend, places orders, or takes payments. Its shopping bag is stored separately from the connected store's bag.
 
-The visual design uses warm white, charcoal, terracotta accents, oversized sans-serif type, and editorial photography. The storefront, product pages, bag, checkout preview, and order lookup share the same responsive styles. Photographs are served locally; attribution and source links are in [image credits](public/images/CREDITS.md). Demo imagery is illustrative and should be replaced with actual product photography before publishing a real catalogue.
+The visual design pairs Instrument Serif with Manrope, warm white, charcoal, terracotta accents, and editorial photography. The storefront, product pages, bag, checkout preview, and order lookup share the same responsive styles. Fonts and photographs are served locally; source and license details are in [font credits](public/fonts/CREDITS.md) and [image credits](public/images/CREDITS.md). Demo imagery is illustrative and should be replaced with actual product photography before publishing a real catalogue.
+
+The homepage uses staggered headline entrances and a slow photograph reveal. Scroll reveals run once per element, including products loaded asynchronously. Sticky navigation, button feedback, product hover reveals, mobile menu entrances, and bag-count updates complete the motion system. All motion respects `prefers-reduced-motion`; content remains visible when observer APIs are unavailable, and keyboard focus exposes unrevealed content immediately. No scroll interception or continuous animation loop is used.
 
 ## Run against the existing backend
 
