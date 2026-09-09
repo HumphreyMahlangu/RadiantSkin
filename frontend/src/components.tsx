@@ -51,26 +51,33 @@ export function ProductCard({ product }: { product: Product }) {
         </span>
         {product.stockQuantity === 0 && <span className="product-badge">Out of stock</span>}
       </Link>
-      <div className="product-meta">
-        <span>
-          {product.brand || categories.find((category) => category.id === product.category)?.label}
-        </span>
-        <span>{product.volumeMl > 0 ? `${product.volumeMl} ml` : ''}</span>
-      </div>
-      <Link className="product-title" to={`/products/${product.productId}`}>
-        {product.name}
-      </Link>
-      <div className="product-card-bottom">
-        <span>{money(product.price)}</span>
-        <button
-          className="add-button"
-          aria-label={`Add ${product.name} to bag`}
-          disabled={unavailable}
-          onClick={() => setQuantity(product, quantity + 1)}
-        >
-          {unavailable ? (quantity ? 'In your bag' : 'Unavailable') : 'Add to bag'}
-          <FiPlus aria-hidden="true" />
-        </button>
+      <div className="product-card-content">
+        <div className="product-meta">
+          <span>
+            {product.brand ||
+              categories.find((category) => category.id === product.category)?.label}
+          </span>
+          <span className="product-price">{money(product.price)}</span>
+        </div>
+        <Link className="product-title" to={`/products/${product.productId}`}>
+          {product.name}
+        </Link>
+        <div className="product-card-bottom">
+          <span>
+            {product.volumeMl > 0
+              ? `${product.volumeMl} ml`
+              : categories.find((category) => category.id === product.category)?.label}
+          </span>
+          <button
+            className="add-button"
+            aria-label={`Add ${product.name} to bag`}
+            disabled={unavailable}
+            onClick={() => setQuantity(product, quantity + 1)}
+          >
+            {unavailable ? (quantity ? 'In your bag' : 'Unavailable') : 'Add to bag'}
+            <FiPlus aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </article>
   )

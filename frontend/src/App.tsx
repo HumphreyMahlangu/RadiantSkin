@@ -43,15 +43,14 @@ function Shell() {
         Skip to content
       </a>
       <div className="announcement">
-        <span>Skin. Body. Hair.</span>
-        <span>Everyday care, considered.</span>
+        <span>Considered essentials for your everyday.</span>
         <span>South Africa / ZAR</span>
       </div>
       <div className="navigation-shell">
         <header className="header">
           <Link to="/" className="wordmark" aria-label="RadiantSkin home">
-            RADIANT<span>SKIN</span>
-            <span className="wordmark-period">.</span>
+            radiant<span>skin</span>
+            <small>EVERYDAY CARE</small>
           </Link>
           <nav className="desktop-nav" aria-label="Main navigation">
             <NavLink to="/shop">Shop all</NavLink>
@@ -124,37 +123,38 @@ function Shell() {
         </div>
       </main>
       <footer className="footer">
-        <div className="footer-top" data-reveal>
-          <div>
-            <Link className="wordmark" to="/">
-              RADIANT<span>SKIN</span>
-              <span className="wordmark-period">.</span>
+        <div className="footer-directory" data-reveal>
+          <div className="footer-message">
+            <span className="eyebrow">Your skin. Your standards.</span>
+            <h2>
+              Good care starts
+              <br />
+              with <em>you.</em>
+            </h2>
+            <Link className="text-link" to="/shop">
+              Find your everyday <FiArrowUpRight />
             </Link>
-            <p>Your skin. Your standards.</p>
           </div>
           <div className="footer-links">
-            <span className="eyebrow">Explore</span>
-            <Link to="/shop">
-              Shop the collection <FiArrowUpRight />
-            </Link>
-            <Link to="/bag">
-              Your shopping bag <FiArrowUpRight />
-            </Link>
-            <Link to="/orders">
-              Track your order <FiArrowUpRight />
-            </Link>
+            <span className="eyebrow">The collections</span>
+            <Link to="/shop">Shop all</Link>
+            <Link to="/shop?category=skin">Skin care</Link>
+            <Link to="/shop?category=body">Body care</Link>
+            <Link to="/shop?category=hair">Hair care</Link>
           </div>
-          <div className="footer-note">
-            <span className="eyebrow">Considered care</span>
+          <div className="footer-links">
+            <span className="eyebrow">At your service</span>
+            <Link to="/bag">Your shopping bag</Link>
+            <Link to="/orders">Track your order</Link>
             <p>
-              Skin, body, and hair care.
+              South Africa
               <br />
-              Selected by you, for you.
+              Prices in ZAR
             </p>
           </div>
         </div>
-        <div className="footer-statement" aria-hidden="true" data-reveal>
-          Feel like <em>you.</em>
+        <div className="footer-signature" aria-hidden="true">
+          radiant skin
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} RadiantSkin</span>

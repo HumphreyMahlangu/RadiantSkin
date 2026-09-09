@@ -3,9 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import {
   FiArrowLeft,
-  FiArrowDown,
   FiArrowRight,
-  FiArrowUpRight,
   FiCheck,
   FiInfo,
   FiPackage,
@@ -26,163 +24,7 @@ import { useStore } from './StoreContext'
 import { categories, createApi, money } from './lib/store'
 import type { Order, Product } from './lib/store'
 
-export function HomePage() {
-  const { products } = useStore()
-  const categoryImages: Record<string, string> = {
-    skin: '/images/campaign-woman.jpg',
-    body: '/images/cream-texture.jpg',
-    hair: '/images/campaign-man.jpg',
-  }
-  return (
-    <>
-      <section className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">Everyday essentials. Personally chosen.</span>
-          <h1>
-            <span className="hero-line">
-              <span>In your</span>
-            </span>
-            <span className="hero-line">
-              <span>
-                own <em>skin.</em>
-              </span>
-            </span>
-          </h1>
-          <div className="hero-description">
-            <p>
-              Care is personal.
-              <br />
-              Find the essentials that belong in your everyday.
-            </p>
-            <Link className="button" to="/shop">
-              Discover the collection <FiArrowUpRight />
-            </Link>
-          </div>
-          <div className="hero-footnote">
-            <a className="scroll-cue" href="#collection">
-              Explore the edit <FiArrowDown aria-hidden="true" />
-            </a>
-            <span>01 / The everyday collection</span>
-          </div>
-        </div>
-        <div className="hero-visual">
-          <img
-            className="campaign-image"
-            src="/images/campaign-woman.jpg"
-            alt="A woman cleansing her cheek with a cotton pad in natural light"
-            fetchPriority="high"
-            width="1400"
-            height="2097"
-          />
-          <div className="campaign-caption">
-            <span>The everyday edit</span>
-            <span>Skin / Body / Hair</span>
-          </div>
-        </div>
-      </section>
-      <div className="editorial-intro">
-        <span className="eyebrow" data-reveal>
-          A considered approach
-        </span>
-        <p data-reveal>
-          A daily essential.
-          <br />
-          <span>A personal choice.</span>
-        </p>
-        <div data-reveal>
-          From your first cleanse to your final step. Explore skin, body, and hair care at your own
-          pace.
-        </div>
-      </div>
-      <section className="section collection-section" id="collection">
-        <div className="section-heading" data-reveal>
-          <div>
-            <span className="eyebrow">01 / The collection</span>
-            <h2>The daily edit.</h2>
-          </div>
-          <Link className="text-link" to="/shop">
-            Explore all products <FiArrowUpRight />
-          </Link>
-        </div>
-        <CatalogueStatus>
-          {products.length ? (
-            <div className="product-grid">
-              {products.slice(0, 4).map((product) => (
-                <ProductCard key={product.productId} product={product} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState title="The collection is coming soon">
-              Our shelves are being prepared. Check back soon.
-            </EmptyState>
-          )}
-        </CatalogueStatus>
-      </section>
-      <section className="section categories-section">
-        <div className="section-heading" data-reveal>
-          <div>
-            <span className="eyebrow">02 / Find your focus</span>
-            <h2>Every part of you.</h2>
-          </div>
-          <p>Three collections. Your own way.</p>
-        </div>
-        <div className="category-grid">
-          {categories.map((category, index) => (
-            <Link
-              to={`/shop?category=${category.id}`}
-              className={`category-card category-${category.id}`}
-              key={category.id}
-              data-reveal
-            >
-              <div className="category-photo">
-                <img
-                  src={categoryImages[category.id]}
-                  alt=""
-                  loading="lazy"
-                  width="700"
-                  height="900"
-                />
-                <span className="category-number">0{index + 1}</span>
-              </div>
-              <div className="category-caption">
-                <h3>{category.label}</h3>
-                <FiArrowUpRight aria-hidden="true" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-      <section className="manifesto">
-        <div className="manifesto-photo" data-reveal="image">
-          <img
-            src="/images/cream-texture.jpg"
-            alt="The texture of a cream in natural light"
-            loading="lazy"
-            width="1400"
-            height="1490"
-          />
-        </div>
-        <div className="manifesto-copy" data-reveal>
-          <span className="eyebrow">03 / A different pace</span>
-          <h2>
-            Good care.
-            <br />
-            On your
-            <br />
-            <span>terms.</span>
-          </h2>
-          <p>
-            Build a routine around your needs, your preferences, and the time you have. Choose what
-            belongs on your shelf.
-          </p>
-          <Link className="text-link" to="/shop">
-            Find your essentials <FiArrowUpRight />
-          </Link>
-        </div>
-      </section>
-    </>
-  )
-}
+export { HomePage } from './HomePage'
 
 export function ShopPage() {
   const { products } = useStore()
@@ -221,89 +63,94 @@ export function ShopPage() {
     if (location.hash === '#search') searchRef.current?.focus()
   }, [location.hash])
   return (
-    <div className="page section">
+    <div className="page section shop-page">
       <div className="page-heading">
         <span className="eyebrow">The RadiantSkin collection</span>
         <h1>The collection.</h1>
         <p>Skin, body, and hair care. A routine that’s entirely yours.</p>
       </div>
-      <div className="shop-toolbar">
-        <div className="category-tabs" role="group" aria-label="Product category">
-          {[{ id: 'all', label: 'Shop all' }, ...categories].map((item) => (
-            <button
-              key={item.id}
-              aria-pressed={category === item.id}
-              className={category === item.id ? 'selected' : ''}
-              onClick={() => update('category', item.id === 'all' ? '' : item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <div className="search-field">
-          <FiSearch aria-hidden="true" />
-          <label className="sr-only" htmlFor="search">
-            Search products
-          </label>
-          <input
-            id="search"
-            ref={searchRef}
-            type="search"
-            placeholder="Search your essentials…"
-            value={query}
-            onChange={(event) => update('q', event.target.value)}
-          />
-        </div>
-      </div>
-      <div className="shop-filters">
-        <span>
-          {visible.length} {visible.length === 1 ? 'essential' : 'essentials'}
-        </span>
-        <div>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={inStock}
-              onChange={(event) => update('stock', event.target.checked ? 'true' : '')}
-            />{' '}
-            In stock only
-          </label>
-          <label className="sort-label">
-            <FiSliders aria-hidden="true" />
-            <span className="sr-only">Sort products</span>
-            <select value={sort} onChange={(event) => update('sort', event.target.value)}>
-              <option value="featured">Default order</option>
-              <option value="price-asc">Price: low to high</option>
-              <option value="price-desc">Price: high to low</option>
-              <option value="name">Name: A–Z</option>
-            </select>
-          </label>
-        </div>
-      </div>
-      <CatalogueStatus>
-        {visible.length ? (
-          <div className="product-grid">
-            {visible.map((product) => (
-              <ProductCard key={product.productId} product={product} />
+      <div className="shop-layout">
+        <aside className="shop-toolbar" aria-label="Find your essentials">
+          <span className="eyebrow">Browse the collection</span>
+          <div className="category-tabs" role="group" aria-label="Product category">
+            {[{ id: 'all', label: 'Shop all' }, ...categories].map((item) => (
+              <button
+                key={item.id}
+                aria-pressed={category === item.id}
+                className={category === item.id ? 'selected' : ''}
+                onClick={() => update('category', item.id === 'all' ? '' : item.id)}
+              >
+                {item.label}
+              </button>
             ))}
           </div>
-        ) : (
-          <EmptyState
-            title={products.length ? 'No essentials found' : 'Our shelves are being prepared'}
-            action={
-              products.length ? (
-                <button className="button secondary" onClick={() => setParams({})}>
-                  Clear filters <FiArrowRight />
-                </button>
-              ) : undefined
-            }
-          >
-            {products.length
-              ? 'Try a different search or clear your filters to see the whole collection.'
-              : 'Check back soon for skin, body, and hair care.'}
-          </EmptyState>
-        )}
-      </CatalogueStatus>
+          <div className="search-field">
+            <FiSearch aria-hidden="true" />
+            <label className="sr-only" htmlFor="search">
+              Search products
+            </label>
+            <input
+              id="search"
+              ref={searchRef}
+              type="search"
+              placeholder="Search your essentials…"
+              value={query}
+              onChange={(event) => update('q', event.target.value)}
+            />
+          </div>
+        </aside>
+        <div className="shop-results">
+          <div className="shop-filters">
+            <span>
+              {visible.length} {visible.length === 1 ? 'essential' : 'essentials'}
+            </span>
+            <div>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={inStock}
+                  onChange={(event) => update('stock', event.target.checked ? 'true' : '')}
+                />{' '}
+                In stock only
+              </label>
+              <label className="sort-label">
+                <FiSliders aria-hidden="true" />
+                <span className="sr-only">Sort products</span>
+                <select value={sort} onChange={(event) => update('sort', event.target.value)}>
+                  <option value="featured">Default order</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                  <option value="name">Name: A–Z</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <CatalogueStatus>
+            {visible.length ? (
+              <div className="product-grid">
+                {visible.map((product) => (
+                  <ProductCard key={product.productId} product={product} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title={products.length ? 'No essentials found' : 'Our shelves are being prepared'}
+                action={
+                  products.length ? (
+                    <button className="button secondary" onClick={() => setParams({})}>
+                      Clear filters <FiArrowRight />
+                    </button>
+                  ) : undefined
+                }
+              >
+                {products.length
+                  ? 'Try a different search or clear your filters to see the whole collection.'
+                  : 'Check back soon for skin, body, and hair care.'}
+              </EmptyState>
+            )}
+          </CatalogueStatus>
+        </div>
+      </div>
     </div>
   )
 }

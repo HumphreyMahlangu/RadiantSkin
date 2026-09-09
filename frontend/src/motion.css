@@ -9,17 +9,9 @@
     transform: translateY(0);
   }
 }
-@keyframes line-in {
-  from {
-    transform: translateY(115%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
 @keyframes photograph-in {
   from {
-    clip-path: inset(12% 0 0 0);
+    clip-path: inset(0 0 0 12%);
     opacity: 0;
   }
   to {
@@ -46,29 +38,29 @@
   }
 }
 
-.hero .eyebrow {
-  animation: rise-in 0.9s var(--ease-out) 0.1s both;
+.campaign-portraits {
+  animation: photograph-in 1.5s var(--ease-out) both;
 }
-.hero-line > span {
-  animation: line-in 1.25s var(--ease-out) 0.18s both;
+.campaign-portraits img {
+  animation: photograph-settle 2.8s var(--ease-out) both;
 }
-.hero-line:nth-child(2) > span {
-  animation-delay: 0.34s;
+.campaign-portraits .portrait-man {
+  animation-delay: 0.12s;
 }
-.hero-description {
-  animation: rise-in 1s var(--ease-out) 0.65s both;
+.campaign h1 > span {
+  animation: rise-in 1.1s var(--ease-out) 0.2s both;
 }
-.hero-footnote {
-  animation: rise-in 1s var(--ease-out) 0.85s both;
+.campaign h1 > em {
+  animation: rise-in 1.3s var(--ease-out) 0.35s both;
 }
-.hero-visual {
-  animation: photograph-in 1.45s var(--ease-out) 0.18s both;
+.campaign-topline {
+  animation: rise-in 1s var(--ease-out) 0.3s both;
 }
-.campaign-image {
-  animation: photograph-settle 2.4s var(--ease-out) 0.18s both;
+.campaign-invitation {
+  animation: rise-in 1.2s var(--ease-out) 0.55s both;
 }
-.campaign-caption {
-  animation: rise-in 1s var(--ease-out) 1s both;
+.campaign-scroll {
+  animation: rise-in 1s var(--ease-out) 0.8s both;
 }
 .route-content > .page {
   animation: rise-in 0.7s var(--ease-out) both;
@@ -91,13 +83,13 @@
     opacity 0.9s var(--ease-out),
     transform 1.1s var(--ease-out);
 }
-[data-reveal-state='visible']:is(.product-card, .category-card):nth-child(4n + 2) {
+[data-reveal-state='visible']:is(.product-card, .story):nth-child(4n + 2) {
   transition-delay: 90ms;
 }
-[data-reveal-state='visible']:is(.product-card, .category-card):nth-child(4n + 3) {
+[data-reveal-state='visible']:is(.product-card, .story):nth-child(4n + 3) {
   transition-delay: 180ms;
 }
-[data-reveal-state='visible']:is(.product-card, .category-card):nth-child(4n + 4) {
+[data-reveal-state='visible']:is(.product-card, .story):nth-child(4n + 4) {
   transition-delay: 270ms;
 }
 [data-reveal='image'][data-reveal-state='waiting'] {
@@ -144,23 +136,24 @@
   transform: translateY(2px);
 }
 .text-link svg,
-.category-caption > svg,
-.scroll-cue svg {
+.story-action > svg,
+.campaign-scroll svg {
   transition: transform 0.6s var(--ease-out);
 }
 .text-link:hover svg,
-.category-card:hover .category-caption > svg {
+.story:hover .story-action > svg,
+.story:focus-visible .story-action > svg {
   transform: translate(4px, -4px);
 }
-.scroll-cue:hover svg {
+.campaign-scroll:hover svg {
   transform: translateY(5px);
 }
-.category-photo img,
+.story-image img,
 .product-image img {
   transition: transform 1.1s var(--ease-out);
 }
-.category-card:hover img,
-.category-card:focus-visible img {
+.story:hover img,
+.story:focus-visible img {
   transform: scale(1.045);
 }
 .product-image-link:hover img,
@@ -197,22 +190,35 @@
   transform: rotate(180deg);
 }
 
+.collection-index a svg,
+.campaign-shop svg,
+.ritual-link svg {
+  transition: transform 0.5s var(--ease-out);
+}
+.collection-index a:hover svg,
+.campaign-shop:hover svg,
+.ritual-link:hover svg {
+  transform: translate(4px, -4px);
+}
+.ritual-link {
+  transition:
+    background 0.4s,
+    color 0.4s;
+}
+.ritual-link:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
 @media (hover: none) {
   .product-discover {
     display: none;
   }
 }
 @media (max-width: 760px) {
-  .hero-description .button:hover:not(:disabled) {
-    background: transparent;
-  }
-  .hero-description .button::before {
-    display: none;
-  }
-  [data-reveal-state='visible']:is(.product-card, .category-card):nth-child(n) {
+  [data-reveal-state='visible']:is(.product-card, .story):nth-child(n) {
     transition-delay: 0ms;
   }
-  [data-reveal-state='visible']:is(.product-card, .category-card):nth-child(even) {
+  [data-reveal-state='visible']:is(.product-card, .story):nth-child(even) {
     transition-delay: 90ms;
   }
 }
@@ -229,7 +235,7 @@
     transform: none !important;
   }
   .product-image-link:hover img,
-  .category-card:hover img {
+  .story:hover img {
     transform: none;
   }
 }
