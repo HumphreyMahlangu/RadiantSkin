@@ -1,157 +1,173 @@
-import { useState } from "react";
-import type { FormEvent, ChangeEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
+import { useEffect, useRef, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 
-function Register() {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [error, setError] = useState("");
+type Field = 'firstName' | 'lastName' | 'email' | 'phoneNumber' | 'password' | 'confirmPassword'
+type Values = Record<Field, string>
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+const empty: Values = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  password: '',
+  confirmPassword: '',
+}
+const fields: Field[] = ['firstName', 'lastName', 'email', 'phoneNumber', 'password', 'confirmPassword']
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    const response = await fetch("http://localhost:8080/customer/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        email: form.email,
-        phoneNumber: form.phone,
-        password: form.password,
-      }),
-    });
-
-    if (response.ok) {
-      navigate("/login");
-    } else {
-      const message = await response.text();
-      setError(message);
-    }
-  };
-
-  return (
-    <>
-      <Navbar />
-      <div className="auth-page">
-        <div className="auth-card">
-          <h1>Create your account</h1>
-          <p className="auth-sub">
-            Join RadiantSkin for honest, effective skincare.
-          </p>
-
-          <form onSubmit={handleSubmit}>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="firstName">First Name</label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  placeholder="firstName"
-                  value={form.firstName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="lastName">Last Name</label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  placeholder="lastName"
-                  value={form.lastName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@email.com"
-                value={form.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="phone">Phone Number</label>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="+27 12 345 6789"
-                value={form.phone}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {error && <p className="auth-error">{error}</p>}
-
-            <button type="submit" className="btn btn-primary btn-block">
-              Create Account
-            </button>
-          </form>
-
-          <p className="auth-footer-text">
-            Already have an account? <Link to="/login">Login</Link>
-          </p>
-        </div>
-      </div>
-    </>
-  );
+function validate(values: Values): Partial<Record<Field, string>> {
+  const errors: Partial<Record<Field, string>> = {}
+  if (!values.firstName.trim()) errors.firstName = 'Enter your first name.'
+  if (!values.lastName.trim()) errors.lastName = 'Enter your last name.'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim()))
+    errors.email = 'Enter a valid email address.'
+  if (!values.phoneNumber.trim()) errors.phoneNumber = 'Enter your phone number.'
+  if (values.password.length < 8) errors.password = 'Use at least 8 characters.'
+  if (values.confirmPassword !== values.password)
+    errors.confirmPassword = 'The passwords do not match.'
+  else if (!values.confirmPassword) errors.confirmPassword = 'Confirm your password.'
+  return errors
 }
 
-export default Register;
+export default function RegisterPage() {
+  const [values, setValues] = useState<Values>(empty)
+  const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({})
+  const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [serverError, setServerError] = useState('')
+  const [emailTaken, setEmailTaken] = useState(false)
+  const [created, setCreated] = useState(false)
+  const errorRef = useRef<HTMLDivElement>(null)
+  const errors = validate(values)
+
+  useEffect(() => {
+    if (serverError) errorRef.current?.focus()
+  }, [serverError])
+
+  function change(event: ChangeEvent<HTMLInputElement>) {
+    const field = event.currentTarget.name as Field
+    const value = event.currentTarget.value
+    setValues((current) => ({ ...current, [field]: value }))
+    if (serverError) setServerError('')
+    if (field === 'email') setEmailTaken(false)
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (submitting) return
+    setSubmitted(true)
+    setServerError('')
+    setEmailTaken(false)
+    const firstError = fields.find((field) => errors[field])
+    if (firstError) {
+      document.getElementById(firstError)?.focus()
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
+      const response = await fetch(`${base}/customer/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          firstName: values.firstName.trim(),
+          lastName: values.lastName.trim(),
+          email: values.email.trim().toLowerCase(),
+          phoneNumber: values.phoneNumber.trim(),
+          password: values.password,
+        }),
+      })
+      if (!response.ok) {
+        if (response.status === 400) {
+          const message = await response.text()
+          setServerError(
+            message.includes('already registered')
+              ? 'An account with this email already exists.'
+              : 'Please check your details and try again.',
+          )
+          if (message.includes('already registered')) setEmailTaken(true)
+        } else {
+          setServerError('We could not create your account right now. Please try again.')
+        }
+        return
+      }
+      setValues(empty)
+      setCreated(true)
+    } catch {
+      setServerError('We could not reach the store. Check your connection and try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="page section account-page">
+      <div className="account-intro">
+        <span className="eyebrow">Your everyday care</span>
+        <h1>Create an account.</h1>
+        <p>Keep your details ready for the RadiantSkin experiences ahead.</p>
+        <a className="text-link" href="#account-form">Start with your details</a>
+      </div>
+      <div className="account-panel" id="account-form">
+        {created ? (
+          <div className="account-success" role="status">
+            <span className="eyebrow">Welcome to RadiantSkin</span>
+            <h2>Your account has been created.</h2>
+            <p>You can continue browsing the collection. Account sign-in is not available in this storefront yet.</p>
+            <Link className="button" to="/shop">Shop the collection</Link>
+          </div>
+        ) : (
+          <>
+            <span className="eyebrow">Join RadiantSkin</span>
+            <h2>Your details.</h2>
+            <p className="account-panel-intro">All fields are required.</p>
+            {serverError && (
+              <div className="account-alert" role="alert" tabIndex={-1} ref={errorRef}>
+                {serverError}
+              </div>
+            )}
+            <form onSubmit={submit} noValidate>
+              <div className="account-fields">
+                {([
+                  ['firstName', 'First name', 'given-name', 'text'],
+                  ['lastName', 'Last name', 'family-name', 'text'],
+                  ['email', 'Email address', 'email', 'email'],
+                  ['phoneNumber', 'Phone number', 'tel', 'tel'],
+                  ['password', 'Password', 'new-password', 'password'],
+                  ['confirmPassword', 'Confirm password', 'new-password', 'password'],
+                ] as const).map(([field, label, autocomplete, type]) => {
+                  const errorMessage = (touched[field] || submitted)
+                    ? errors[field] || (field === 'email' && emailTaken ? 'Use a different email address.' : undefined)
+                    : undefined
+                  return (
+                    <div className="account-field" key={field}>
+                      <label htmlFor={field}>{label}</label>
+                      <input
+                        id={field}
+                        name={field}
+                        type={type}
+                        autoComplete={autocomplete}
+                        value={values[field]}
+                        onChange={change}
+                        onBlur={() => setTouched((current) => ({ ...current, [field]: true }))}
+                        aria-invalid={Boolean(errorMessage)}
+                        aria-describedby={errorMessage ? `${field}-error${field === 'password' ? ' password-hint' : ''}` : field === 'password' ? 'password-hint' : undefined}
+                        required
+                      />
+                      {field === 'password' && <span className="account-hint" id="password-hint">At least 8 characters.</span>}
+                      {errorMessage && <span className="account-field-error" id={`${field}-error`}>{errorMessage}</span>}
+                    </div>
+                  )
+                })}
+              </div>
+              <button className="button account-submit" type="submit" disabled={submitting}>
+                {submitting ? 'Creating account…' : 'Create account'}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

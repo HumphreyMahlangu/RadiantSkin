@@ -13,6 +13,14 @@ export type Product = {
   reviews: { reviewId: number; rating: number; comment: string }[]
 }
 export type BagItem = { productId: number; quantity: number }
+export type Review = { reviewId: number; rating: number; comment: string; reviewDate: string }
+export type ReviewSubmission = {
+  productId: number
+  rating: number
+  comment: string
+  email: string
+  password: string
+}
 export type Order = {
   orderId: number
   orderDate: string
@@ -80,6 +88,19 @@ export function safeImageUrl(value: string): string {
   if (/^https?:\/\//i.test(value) || /^\/(?!\/)/.test(value)) return value
   return ''
 }
+function normalizeReview(value: unknown): Review {
+  const review = record(value)
+  if (!positiveId(review.reviewId) || !Number.isInteger(review.rating) ||
+      Number(review.rating) < 1 || Number(review.rating) > 5 ||
+      !text(review.comment).trim())
+    throw new Error('A review could not be loaded. Please try again later.')
+  return {
+    reviewId: review.reviewId as number,
+    rating: review.rating as number,
+    comment: text(review.comment),
+    reviewDate: text(review.reviewDate),
+  }
+}
 export class ApiError extends Error {
   status: number
   constructor(message: string, status = 0) {
@@ -88,16 +109,21 @@ export class ApiError extends Error {
   }
 }
 export function createApi(baseUrl: string, fetcher?: typeof fetch) {
-  async function request(path: string, signal?: AbortSignal): Promise<unknown> {
+  async function request(path: string, signal?: AbortSignal, init?: RequestInit): Promise<unknown> {
     try {
       const response = await (fetcher ?? fetch)(`${baseUrl.replace(/\/$/, '')}${path}`, {
-        headers: { Accept: 'application/json' },
+        ...init,
+        headers: { Accept: 'application/json', ...init?.headers },
         cache: 'no-store',
         signal: AbortSignal.any([AbortSignal.timeout(15000), ...(signal ? [signal] : [])]),
       })
       if (!response.ok)
         throw new ApiError(
-          response.status === 404
+          response.status === 401
+            ? 'That email or password is incorrect.'
+            : response.status === 400 && path === '/review/submit'
+              ? 'Check your rating and review, then try again.'
+              : response.status === 404 && path.startsWith('/order/')
             ? 'We couldn’t find that order. Check the order number and try again.'
             : 'The store is temporarily unavailable. Please try again in a moment.',
           response.status,
@@ -148,6 +174,20 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
             })
           : [],
       }
+    },
+    async reviews(productId: number, signal?: AbortSignal): Promise<Review[]> {
+      if (!positiveId(productId)) throw new ApiError('Choose a valid product.', 400)
+      const body = await request(`/review/product/${productId}`, signal)
+      if (!Array.isArray(body)) throw new ApiError('Reviews could not be loaded.')
+      return body.map(normalizeReview)
+    },
+    async submitReview(input: ReviewSubmission): Promise<Review> {
+      const body = await request('/review/submit', undefined, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      return normalizeReview(body)
     },
   }
 }

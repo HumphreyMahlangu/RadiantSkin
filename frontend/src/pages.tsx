@@ -9,7 +9,6 @@ import {
   FiPackage,
   FiSearch,
   FiSliders,
-  FiStar,
   FiTrash2,
 } from 'react-icons/fi'
 import {
@@ -21,6 +20,8 @@ import {
   ShopLink,
 } from './components'
 import { useStore } from './StoreContext'
+import DemoPaymentForm from './DemoPaymentForm'
+import ProductReviews from './ProductReviews'
 import { categories, createApi, money } from './lib/store'
 import type { Order, Product } from './lib/store'
 
@@ -243,23 +244,7 @@ function ProductDetail({ product }: { product: Product }) {
               <p>{product.instructions}</p>
             </details>
           )}
-          <details>
-            <summary>Reviews ({product.reviews.length})</summary>
-            {product.reviews.length ? (
-              product.reviews.map((review, index) => (
-                <div className="review" key={`${review.reviewId}-${index}`}>
-                  <span aria-label={`${review.rating} out of 5 stars`}>
-                    {Array.from({ length: review.rating }, (_, index) => (
-                      <FiStar key={index} />
-                    ))}
-                  </span>
-                  <p>{review.comment}</p>
-                </div>
-              ))
-            ) : (
-              <p>No reviews yet.</p>
-            )}
-          </details>
+          <ProductReviews key={product.productId} productId={product.productId} />
         </div>
       </div>
       {related.length > 0 && (
@@ -413,6 +398,7 @@ const provinces = [
 export function CheckoutPage() {
   const { bag, products } = useStore()
   const [draft, setDraft] = useState<Record<string, string> | null>(null)
+  const [demoReference, setDemoReference] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
   const reviewRef = useRef<HTMLDivElement>(null)
   const invalid = bag.some((item) => {
@@ -442,6 +428,9 @@ export function CheckoutPage() {
   useEffect(() => {
     if (draft) reviewRef.current?.focus()
   }, [draft])
+  useEffect(() => {
+    if (demoReference) reviewRef.current?.focus()
+  }, [demoReference])
   return (
     <section className="section page">
       <Link className="text-link" to="/bag">
@@ -473,10 +462,10 @@ export function CheckoutPage() {
               <div className="checkout-notice">
                 <FiInfo />
                 <div>
-                  <strong>Online ordering is not available yet.</strong>
+                  <strong>Demo checkout only.</strong>
                   <p>
-                    You can prepare and review your details below. No order will be placed and no
-                    payment will be taken.
+                    You can review your details and try a fictional card below. No real order will
+                    be placed and no payment will be taken.
                   </p>
                 </div>
               </div>
@@ -548,39 +537,52 @@ export function CheckoutPage() {
                 </form>
                 {draft && (
                   <div className="checkout-review" ref={reviewRef} tabIndex={-1}>
-                    <span className="eyebrow">
-                      <FiCheck /> Ready for review
-                    </span>
-                    <h2>Your checkout details</h2>
-                    <div>
-                      <h3>Contact</h3>
-                      <p>
-                        {draft.firstName} {draft.lastName}
-                        <br />
-                        {draft.email}
-                        <br />
-                        {draft.phoneNumber}
-                      </p>
-                    </div>
-                    <div>
-                      <h3>Delivery address</h3>
-                      <p>
-                        {draft.street}
-                        <br />
-                        {draft.city}, {draft.province} {draft.postalCode}
-                        <br />
-                        {draft.country}
-                      </p>
-                    </div>
-                    <button
-                      className="text-link"
-                      onClick={() => {
-                        setDraft(null)
-                        window.setTimeout(() => formRef.current?.querySelector('input')?.focus(), 0)
-                      }}
-                    >
-                      <FiArrowLeft /> Edit details
-                    </button>
+                    {demoReference ? (
+                      <div className="demo-payment-success" role="status">
+                        <span className="eyebrow"><FiCheck /> Demo approved</span>
+                        <h2>Demo checkout complete.</h2>
+                        <p>Reference: <strong>{demoReference}</strong></p>
+                        <p>No real order was placed and no money was taken. Your bag is still saved.</p>
+                        <Link className="button" to="/shop">Back to the collection <FiArrowRight /></Link>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="eyebrow">
+                          <FiCheck /> Ready for review
+                        </span>
+                        <h2>Your checkout details</h2>
+                        <div>
+                          <h3>Contact</h3>
+                          <p>
+                            {draft.firstName} {draft.lastName}
+                            <br />
+                            {draft.email}
+                            <br />
+                            {draft.phoneNumber}
+                          </p>
+                        </div>
+                        <div>
+                          <h3>Delivery address</h3>
+                          <p>
+                            {draft.street}
+                            <br />
+                            {draft.city}, {draft.province} {draft.postalCode}
+                            <br />
+                            {draft.country}
+                          </p>
+                        </div>
+                        <button
+                          className="text-link"
+                          onClick={() => {
+                            setDraft(null)
+                            window.setTimeout(() => formRef.current?.querySelector('input')?.focus(), 0)
+                          }}
+                        >
+                          <FiArrowLeft /> Edit details
+                        </button>
+                        <DemoPaymentForm onApproved={setDemoReference} />
+                      </>
+                    )}
                   </div>
                 )}
                 <aside className="order-summary">
@@ -608,12 +610,8 @@ export function CheckoutPage() {
                     <span>Subtotal</span>
                     <span>{money(total)}</span>
                   </div>
-                  <button className="button" disabled>
-                    Ordering currently unavailable
-                  </button>
                   <p className="summary-note">
-                    Your bag is saved. Come back when online ordering is available to complete your
-                    purchase.
+                    This is a demo checkout. Your bag stays saved, and no order or payment record is created.
                   </p>
                 </aside>
               </div>
