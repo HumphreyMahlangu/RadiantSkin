@@ -6,6 +6,8 @@ package ac.za.mycput.controller;
  */
 
 import ac.za.mycput.domain.Review;
+import ac.za.mycput.domain.Customer;
+import ac.za.mycput.service.CustomerService;
 import ac.za.mycput.service.IReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,16 +16,51 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/review")
 public class ReviewController {
 
     private final IReviewService service;
+    private final CustomerService customerService;
 
     @Autowired
-    public ReviewController(IReviewService service) {
+    public ReviewController(IReviewService service, CustomerService customerService) {
         this.service = service;
+        this.customerService = customerService;
+    }
+
+    public record ReviewSubmission(Long productId, Integer rating, String comment,
+                                   String email, String password) {}
+
+    public record ReviewView(Long reviewId, int rating, String comment, LocalDate reviewDate) {
+        public static ReviewView from(Review review) {
+            return new ReviewView(review.getReviewId(), review.getRating(),
+                    review.getComment(), review.getReviewDate());
+        }
+    }
+
+    @PostMapping("/submit")
+    public ResponseEntity<?> submit(@RequestBody ReviewSubmission submission) {
+        if (submission == null || submission.productId() == null || submission.rating() == null) {
+            return ResponseEntity.badRequest().body("Choose a product and rating");
+        }
+
+        Customer customer;
+        try {
+            customer = customerService.login(submission.email(), submission.password());
+        } catch (IllegalArgumentException invalidCredentials) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+        }
+
+        try {
+            Review saved = service.addReview(customer.getUserId(), submission.productId(),
+                    submission.rating(), submission.comment());
+            return ResponseEntity.status(HttpStatus.CREATED).body(ReviewView.from(saved));
+        } catch (IllegalArgumentException invalidReview) {
+            return ResponseEntity.badRequest().body(invalidReview.getMessage());
+        }
     }
 
     @PostMapping("/create")
@@ -52,8 +89,9 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}")
-    public List<Review> getByProduct(@PathVariable Long productId) {
-        return service.findByProductId(productId);
+    public List<ReviewView> getByProduct(@PathVariable Long productId) {
+        List<Review> reviews = service.findByProductId(productId);
+        return reviews == null ? List.of() : reviews.stream().map(ReviewView::from).toList();
     }
 
     @GetMapping("/customer/{customerId}")

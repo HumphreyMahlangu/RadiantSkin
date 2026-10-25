@@ -634,6 +634,71 @@ details p {
   display: flex;
   gap: 3px;
 }
+.review-form {
+  display: grid;
+  gap: 11px;
+  margin-top: 30px;
+  padding: 28px;
+  background: var(--surface);
+}
+.review-form h3 {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: 27px;
+  font-weight: 400;
+}
+.review-form > p {
+  margin: 0 0 8px;
+  line-height: 1.6;
+}
+.review-form label {
+  font-size: 13px;
+}
+.review-form input,
+.review-form select,
+.review-form textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.review-form textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+.review-form-credentials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+.review-form-credentials > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.review-form-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+.reviews-feedback {
+  padding: 15px;
+  background: #f4e8e2;
+  color: #693526;
+  font-size: 13px;
+}
+.reviews-feedback.success {
+  background: #e7eee5;
+  color: #315338;
+}
+.review-form .button {
+  margin-top: 8px;
+}
 .related {
   margin-top: 90px;
 }
@@ -861,6 +926,70 @@ details p {
 }
 .checkout-review .text-link {
   margin-top: 25px;
+}
+.demo-payment {
+  margin-top: 38px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+.demo-payment h3 {
+  margin: 12px 0;
+  font-family: var(--display-font);
+  font-size: 32px;
+  font-weight: 400;
+}
+.demo-payment-intro {
+  font-size: 13px;
+}
+.demo-card-hint {
+  margin: 22px 0;
+  padding: 19px 20px;
+  background: var(--surface);
+}
+.demo-card-hint p {
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.demo-payment-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 16px;
+}
+.demo-payment-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 13px;
+}
+.demo-payment-field.wide {
+  grid-column: 1 / -1;
+}
+.demo-payment-field input {
+  width: 100%;
+  min-height: 49px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 16px;
+}
+.demo-payment-field input[aria-invalid='true'] {
+  border-color: #914534;
+}
+.demo-payment-submit {
+  width: 100%;
+  margin-top: 25px;
+}
+.demo-payment .account-alert {
+  margin-top: 22px;
+}
+.demo-payment-success .button {
+  margin-top: 26px;
+}
+.demo-payment-success p + p {
+  margin-top: 14px;
 }
 .orders-page {
   max-width: 1000px;
@@ -1133,6 +1262,12 @@ details p {
   }
 }
 @media (max-width: 480px) {
+  .review-form {
+    padding: 22px;
+  }
+  .review-form-credentials {
+    grid-template-columns: 1fr;
+  }
   .shop-filters {
     flex-wrap: wrap;
   }
@@ -1168,5 +1303,140 @@ details p {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Account creation follows the storefront's editorial layout. */
+.account-link {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.account-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.account-page {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(40px, 7vw, 130px);
+  min-height: 660px;
+  align-items: start;
+}
+.account-intro {
+  padding-top: 26px;
+}
+.account-intro h1 {
+  max-width: 550px;
+  margin: 24px 0;
+  font-family: var(--display-font);
+  font-size: clamp(62px, 6.5vw, 116px);
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+}
+.account-intro p {
+  max-width: 370px;
+  font-size: 15px;
+}
+.account-intro .text-link {
+  margin-top: 30px;
+}
+.account-panel {
+  padding: clamp(28px, 4vw, 56px);
+  border: 1px solid var(--line);
+  background: #fcfaf6;
+}
+.account-panel h2 {
+  margin-top: 14px;
+  font-family: var(--display-font);
+  font-size: clamp(38px, 4vw, 56px);
+  line-height: 1.05;
+}
+.account-panel-intro {
+  margin: 13px 0 30px;
+  font-size: 13px;
+}
+.account-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 18px;
+}
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.account-field label {
+  font-size: 13px;
+}
+.account-field input {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+}
+.account-field input[aria-invalid='true'] {
+  border-color: #914534;
+}
+.account-hint,
+.account-field-error {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.account-hint {
+  color: var(--muted);
+}
+.account-field-error {
+  color: #914534;
+}
+.account-alert {
+  margin-bottom: 25px;
+  padding: 17px 20px;
+  border-left: 2px solid #914534;
+  background: #f4e8e2;
+  color: #693526;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.account-submit {
+  width: 100%;
+  margin-top: 32px;
+}
+.account-success p {
+  margin: 20px 0 30px;
+  font-size: 14px;
+}
+@media (max-width: 900px) {
+  .account-link {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .account-page {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    min-height: 0;
+  }
+  .account-intro {
+    padding-top: 0;
+  }
+  .account-intro h1 {
+    font-size: clamp(58px, 12vw, 82px);
+  }
+}
+@media (max-width: 480px) {
+  .account-fields {
+    grid-template-columns: 1fr;
+  }
+  .account-panel {
+    padding: 28px 22px;
+  }
+  .demo-payment-fields {
+    grid-template-columns: 1fr;
   }
 }

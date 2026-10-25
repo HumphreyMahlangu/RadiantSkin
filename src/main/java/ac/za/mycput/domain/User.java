@@ -9,6 +9,7 @@
 
 package ac.za.mycput.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,6 +33,7 @@ public abstract class User {
 
     protected String email;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     protected String password;
 
     @Enumerated(EnumType.STRING)
@@ -99,6 +101,6 @@ public abstract class User {
     @Override
     public String toString() {
         return "User [userId=" + userId + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email
-                + ", password=" + password + ", role=" + role + "]";
+                + ", role=" + role + "]";
     }
 }

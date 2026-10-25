@@ -88,11 +88,16 @@ public class ReviewService implements IReviewService {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
 
+        String trimmedComment = comment == null ? "" : comment.trim();
+        if (trimmedComment.length() < 3 || trimmedComment.length() > 240) {
+            throw new IllegalArgumentException("Review must be between 3 and 240 characters");
+        }
+
         Review review = new Review.Builder()
                 .setCustomer(customer)
                 .setProduct(product)
                 .setRating(rating)
-                .setComment(comment)
+                .setComment(trimmedComment)
                 .setReviewDate(LocalDate.now())
                 .build();
 

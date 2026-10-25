@@ -19,7 +19,7 @@ The homepage uses staggered headline entrances and a slow photograph reveal. Scr
 
 ## Run against the existing backend
 
-The local database now includes nine sourced real products alongside its three existing entries. The storefront reads these records through the backend API. [Catalogue documentation](../database/README.md) covers source prices, stock initialization and repeatable imports.
+The storefront reads products through the backend API. A fresh database has no products; this repository does not currently include a catalogue import or seed script. See the [local setup guide](../README.md) for a safe database and API setup.
 
 ```powershell
 npm.cmd run dev
@@ -31,19 +31,25 @@ The default Vite proxy forwards `/api/*` to `http://127.0.0.1:8080/*`, removing 
 | -------------------------------------------------------------- | ---------------------------------------------------------------- |
 | Catalogue, product details, search, category and stock filters | `GET /product/getAll`                                            |
 | Order status lookup                                            | `GET /order/read/{orderId}`                                      |
+| Product reviews                                                | `GET /review/product/{productId}`                                |
+| Submit a review as a registered customer                       | `POST /review/submit` with account email and password            |
 | Shopping bag                                                   | Local browser storage; product IDs and quantities only           |
-| Checkout                                                       | Local contact/address form and review; order submission disabled |
+| Checkout                                                       | Local contact/address review and fictional demo payment; no real order |
 
 Product categories are identified from the existing subtype fields: `usageInstructions`, `hairConcern`, and `skinConcern`. Prices use South African rand. Search, sorting, and filters run on the fetched catalogue and remain in the URL. The API adapter validates prices, limits request duration, handles null order responses, and omits customer credentials from the frontend order model.
 
 The bag enforces the available stock quantity, survives refreshes, and synchronizes between tabs. Removed or unavailable catalogue items remain visible for removal rather than silently disappearing. Contact and address drafts stay in page memory and are never sent or stored in browser storage.
 
+Customers can create an account from the storefront's **Create account** link. The form validates required details, shows duplicate-email and connection errors, and confirms success without storing the password in browser storage. Sign-in and account sessions are not yet connected to this storefront.
+
+Product pages load reviews from the review API. Registered customers can submit a rating and a 3–240 character review after confirming their email and password. The review response contains only its rating, comment, date, and ID; the form clears the password after a response and does not put credentials in browser storage. The existing legacy review write routes and other customer/order routes still need access control before public deployment.
+
 ## Current integration boundary
 
-- Local database authentication and the product API were verified during the catalogue import. `GET /product/getAll` returns all twelve database products. Checkout and live order flows have not been reverified in this pass.
+- The product API can return an empty catalogue from a fresh database. Product counts in an existing local database depend on its current contents. Checkout and live order flows have not been reverified in this pass.
 - The existing entity responses have circular relationships, and cart-item writes require an abstract `Product`. These must be resolved in a later backend pass before reliable checkout integration.
-- The backend has no authentication/session flow or payment-provider integration. The frontend does not invent login, account access, payment success, shipping rates, or order confirmation. Its order lookup displays only the existing endpoint's order summary. Backend access control remains a prerequisite for public deployment.
-- Ordering is visibly disabled. The checkout preview validates and reviews contact/address details without creating customer, cart, payment, or order records.
+- The backend has no authenticated session flow or payment-provider integration. The frontend does not invent login, account access, real payment success, shipping rates, or a real order confirmation. Its order lookup displays only the existing endpoint's order summary. Backend access control remains a prerequisite for public deployment.
+- Demo checkout validates contact and delivery details, then accepts only the fictional card values shown on the page. Approval and decline are simulated in the browser. Card details are not sent or stored, and no customer, cart, payment, or order records are created. The bag remains saved after a demo approval.
 
 ## Checks
 
@@ -53,7 +59,7 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-The tests cover API shapes and failures, subtype mapping, invalid prices and IDs, saved-bag recovery, stock limits, filters, catalogue retry, checkout privacy, order lookup, navigation, backend failure and recovery, and empty database responses. They use a DOM test environment and mocked API responses; they do not substitute for browser layout or live backend verification.
+The tests cover API shapes and failures, subtype mapping, invalid prices and IDs, saved-bag recovery, stock limits, filters, catalogue retry, review loading and posting, demo payment approval and decline, checkout privacy, order lookup, navigation, backend failure and recovery, and empty database responses. They use a DOM test environment and mocked API responses; they do not substitute for browser layout or live backend verification.
 
 The UI includes responsive layouts, keyboard focus styles, labelled form controls, reduced-motion support, loading states, empty states, broken-image fallbacks, and retry actions. Connected browser tools were unavailable during this pass, so visual verification in a browser remains outstanding.
 
