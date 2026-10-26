@@ -33,6 +33,37 @@ const products = [
     reviews: [],
   },
 ]
+
+const receipt = {
+  orderId: 42,
+  orderDate: '2026-10-25T12:00:00',
+  status: 'PROCESSING',
+  totalAmount: 245,
+  orderItems: [{ orderItemId: 1, quantity: 1, unitPrice: 245, product: { name: 'Daily Cream' } }],
+}
+async function fillCheckout(user: ReturnType<typeof userEvent.setup>) {
+  await screen.findByLabelText('First name')
+  for (const [label, value] of Object.entries({
+    'First name': 'Sam',
+    'Last name': 'Mokoena',
+    'Email address': 'customer@example.com',
+    'Phone number': '0712345678',
+    'Street address': '1 Main Street',
+    City: 'Pretoria',
+    'Postal code': '0001',
+  }))
+    await user.type(screen.getByLabelText(label), value)
+  await user.selectOptions(screen.getByLabelText('Province'), 'Gauteng')
+  await user.click(screen.getByRole('button', { name: 'Review details' }))
+  await screen.findByRole('heading', { name: 'Your checkout details' })
+}
+async function fillCard(user: ReturnType<typeof userEvent.setup>, card: string) {
+  await user.type(screen.getByLabelText('Name on card'), 'Sam Mokoena')
+  await user.type(screen.getByLabelText('Card number'), card)
+  await user.type(screen.getByLabelText('Expiry date (MM/YY)'), '12/30')
+  await user.type(screen.getByLabelText('Security code'), '9876')
+}
+
 const fetcher = vi.fn<typeof fetch>()
 function open(path = '/shop') {
   window.history.replaceState({}, '', path)
@@ -40,10 +71,12 @@ function open(path = '/shop') {
 }
 beforeEach(() => {
   localStorage.clear()
-  fetcher
-    .mockReset()
-    .mockImplementation(async (url) =>
-      new Response(JSON.stringify(String(url).includes('/review/product/') ? [] : products), { status: 200 }))
+  fetcher.mockReset().mockImplementation(
+    async (url) =>
+      new Response(JSON.stringify(String(url).includes('/review/product/') ? [] : products), {
+        status: 200,
+      }),
+  )
   vi.stubGlobal('fetch', fetcher)
   vi.stubGlobal('scrollTo', vi.fn())
 })
@@ -115,9 +148,21 @@ describe('Customer storefront', () => {
     fetcher.mockImplementation(async (url) => {
       const path = String(url)
       if (path.endsWith('/review/submit'))
-        return new Response(JSON.stringify({ reviewId: 12, rating: 5, comment: 'Lovely texture', reviewDate: '2026-10-25' }), { status: 201 })
+        return new Response(
+          JSON.stringify({
+            reviewId: 12,
+            rating: 5,
+            comment: 'Lovely texture',
+            reviewDate: '2026-10-25',
+          }),
+          { status: 201 },
+        )
       if (path.includes('/review/product/'))
-        return new Response(JSON.stringify([{ reviewId: 11, rating: 4, comment: 'Gentle on my skin', reviewDate: '2026-10-24' }]))
+        return new Response(
+          JSON.stringify([
+            { reviewId: 11, rating: 4, comment: 'Gentle on my skin', reviewDate: '2026-10-24' },
+          ]),
+        )
       return new Response(JSON.stringify(products))
     })
     const user = userEvent.setup()
@@ -133,7 +178,10 @@ describe('Customer storefront', () => {
     const call = fetcher.mock.calls.find(([url]) => String(url).endsWith('/review/submit'))
     expect(call?.[1]?.method).toBe('POST')
     expect(JSON.parse(String(call?.[1]?.body))).toMatchObject({
-      productId: 1, rating: 5, comment: 'Lovely texture', email: 'customer@example.com',
+      productId: 1,
+      rating: 5,
+      comment: 'Lovely texture',
+      email: 'customer@example.com',
     })
     expect(localStorage.getItem('radiantskin.bag.v1') || '').not.toContain('SecretPassword123')
     expect((screen.getByLabelText('Account password') as HTMLInputElement).value).toBe('')
@@ -141,7 +189,8 @@ describe('Customer storefront', () => {
   it('rejects incorrect review credentials without adding a review', async () => {
     fetcher.mockImplementation(async (url) => {
       const path = String(url)
-      if (path.endsWith('/review/submit')) return new Response('Invalid email or password', { status: 401 })
+      if (path.endsWith('/review/submit'))
+        return new Response('Invalid email or password', { status: 401 })
       return new Response(JSON.stringify(path.includes('/review/product/') ? [] : products))
     })
     const user = userEvent.setup()
@@ -152,73 +201,110 @@ describe('Customer storefront', () => {
     await user.type(screen.getByLabelText('Account email'), 'customer@example.com')
     await user.type(screen.getByLabelText('Account password'), 'WrongPassword')
     await user.click(screen.getByRole('button', { name: 'Post review' }))
-    expect((await screen.findByRole('alert')).textContent).toContain('email or password is incorrect')
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'email or password is incorrect',
+    )
     expect(screen.queryByText('Feels good')).toBeNull()
     expect((screen.getByLabelText('Account password') as HTMLInputElement).value).toBe('')
   })
-  it('completes a demo checkout without sending or storing payment details', async () => {
+  it.each(['4111 1111 1111 1111', '0000 0000 0000 0002', '7'])(
+    'places an order with card %s, clears the bag, and keeps card values private',
+    async (card) => {
+      fetcher.mockImplementation(
+        async (url) =>
+          new Response(
+            JSON.stringify(String(url).endsWith('/checkout/place') ? receipt : products),
+            { status: String(url).endsWith('/checkout/place') ? 201 : 200 },
+          ),
+      )
+      localStorage.setItem('radiantskin.bag.v1', JSON.stringify([{ productId: 1, quantity: 1 }]))
+      const user = userEvent.setup()
+      open('/checkout')
+      await fillCheckout(user)
+      expect(document.body.textContent).not.toMatch(/demo|simulation|fictional|test card/i)
+      await fillCard(user, card)
+      await user.click(screen.getByRole('button', { name: 'Place order' }))
+      expect(await screen.findByRole('heading', { name: 'Thank you for your order.' })).toBeTruthy()
+      expect(screen.getByText('Your order has been placed and your bag is now empty.')).toBeTruthy()
+      expect(screen.getByRole('link', { name: 'Shopping bag, 0 items' })).toBeTruthy()
+      const calls = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/checkout/place'))
+      expect(calls).toHaveLength(1)
+      const payload = JSON.parse(String(calls[0][1]?.body))
+      expect(payload).toMatchObject({
+        items: [{ productId: 1, quantity: 1 }],
+        expectedTotal: 245,
+        details: { email: 'customer@example.com', street: '1 Main Street' },
+      })
+      expect(Object.keys(payload).sort()).toEqual([
+        'details',
+        'expectedTotal',
+        'items',
+        'requestId',
+      ])
+      expect(String(calls[0][1]?.body)).not.toMatch(/cardNumber|securityCode|expiry|cardholder/)
+      expect(JSON.stringify(localStorage)).not.toContain('customer@example.com')
+      expect(JSON.stringify(localStorage)).not.toContain('9876')
+      await waitFor(() => expect(localStorage.getItem('radiantskin.bag.v1')).toBe('[]'))
+      await user.click(screen.getByRole('link', { name: 'Shopping bag, 0 items' }))
+      expect(
+        await screen.findByRole('heading', { name: 'Your bag is waiting for a little care' }),
+      ).toBeTruthy()
+      cleanup()
+      open('/bag')
+      expect(
+        await screen.findByRole('heading', { name: 'Your bag is waiting for a little care' }),
+      ).toBeTruthy()
+    },
+    15000,
+  )
+  it('preserves the bag on failure and retries with the same order request ID', async () => {
+    let attempts = 0
+    fetcher.mockImplementation(async (url) => {
+      if (String(url).endsWith('/checkout/place')) {
+        attempts++
+        if (attempts === 1) throw new TypeError('Lost response')
+        return new Response(JSON.stringify(receipt), { status: 201 })
+      }
+      return new Response(JSON.stringify(products))
+    })
     localStorage.setItem('radiantskin.bag.v1', JSON.stringify([{ productId: 1, quantity: 1 }]))
     const user = userEvent.setup()
     open('/checkout')
-    await screen.findByLabelText('First name')
-    const values = {
-      'First name': 'Test',
-      'Last name': 'Customer',
-      'Email address': 'test@example.com',
-      'Phone number': '0712345678',
-      'Street address': '1 Test Street',
-      City: 'Pretoria',
-      'Postal code': '0001',
-    }
-    for (const [label, value] of Object.entries(values))
-      await user.type(screen.getByLabelText(label), value)
-    await user.selectOptions(screen.getByLabelText('Province'), 'Gauteng')
-    await user.click(screen.getByRole('button', { name: 'Review details' }))
-    expect(await screen.findByRole('heading', { name: 'Your checkout details' })).toBeTruthy()
-    await user.type(screen.getByLabelText('Name on demo card'), 'Demo Customer')
-    await user.type(screen.getByLabelText('Demo card number'), '4111 1111 1111 1111')
-    await user.type(screen.getByLabelText('Demo expiry date'), '12/30')
-    await user.type(screen.getByLabelText('Demo security code'), '123')
-    await user.click(screen.getByRole('button', { name: 'Complete demo checkout' }))
-    expect(screen.getByText('Use one of the demo card numbers shown above.')).toBeTruthy()
-    await user.clear(screen.getByLabelText('Demo card number'))
-    await user.type(screen.getByLabelText('Demo card number'), '0000 0000 0000 0000')
-    await user.click(screen.getByRole('button', { name: 'Complete demo checkout' }))
-    expect(await screen.findByRole('heading', { name: 'Demo checkout complete.' })).toBeTruthy()
-    expect(screen.getByText(/No real order was placed and no money was taken/)).toBeTruthy()
-    expect(screen.getByText(/DEMO-/)).toBeTruthy()
-    expect(fetcher.mock.calls.every(([url]) => String(url).endsWith('/product/getAll'))).toBe(true)
-    expect(JSON.stringify(localStorage)).not.toContain('test@example.com')
-    expect(JSON.stringify(localStorage)).not.toContain('0000 0000')
+    await fillCheckout(user)
+    await fillCard(user, '1234')
+    await user.click(screen.getByRole('button', { name: 'Place order' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('reach the store')
     expect(localStorage.getItem('radiantskin.bag.v1')).toContain('"productId":1')
-  })
-  it('declines the fictional failure card and keeps the payment form available', async () => {
+    expect((screen.getByLabelText('Security code') as HTMLInputElement).value).toBe('')
+    expect(screen.queryByRole('heading', { name: 'Thank you for your order.' })).toBeNull()
+    await fillCard(user, '9999')
+    await user.click(screen.getByRole('button', { name: 'Place order' }))
+    await screen.findByRole('heading', { name: 'Thank you for your order.' })
+    const calls = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/checkout/place'))
+    expect(JSON.parse(String(calls[0][1]?.body)).requestId).toBe(
+      JSON.parse(String(calls[1][1]?.body)).requestId,
+    )
+    await waitFor(() => expect(localStorage.getItem('radiantskin.bag.v1')).toBe('[]'))
+  }, 15000)
+  it('shows stock conflicts without clearing the bag', async () => {
+    fetcher.mockImplementation(async (url) =>
+      String(url).endsWith('/checkout/place')
+        ? new Response(
+            JSON.stringify({ message: 'Some items no longer have enough stock. Review your bag.' }),
+            { status: 409 },
+          )
+        : new Response(JSON.stringify(products)),
+    )
     localStorage.setItem('radiantskin.bag.v1', JSON.stringify([{ productId: 1, quantity: 1 }]))
     const user = userEvent.setup()
     open('/checkout')
-    await screen.findByLabelText('First name')
-    for (const [label, value] of Object.entries({
-      'First name': 'Demo',
-      'Last name': 'Customer',
-      'Email address': 'demo@example.test',
-      'Phone number': '0712345678',
-      'Street address': '1 Demo Street',
-      City: 'Pretoria',
-      'Postal code': '0001',
-    })) await user.type(screen.getByLabelText(label), value)
-    await user.selectOptions(screen.getByLabelText('Province'), 'Gauteng')
-    await user.click(screen.getByRole('button', { name: 'Review details' }))
-    await user.type(screen.getByLabelText('Name on demo card'), 'Demo Customer')
-    await user.type(screen.getByLabelText('Demo card number'), '0000 0000 0000 0002')
-    await user.type(screen.getByLabelText('Demo expiry date'), '12/30')
-    await user.type(screen.getByLabelText('Demo security code'), '123')
-    await user.click(screen.getByRole('button', { name: 'Complete demo checkout' }))
-    expect((await screen.findByRole('alert')).textContent).toContain('The demo payment was declined')
-    expect(screen.getByLabelText('Demo card number')).toBeTruthy()
-    expect(screen.queryByRole('heading', { name: 'Demo checkout complete.' })).toBeNull()
-    expect(fetcher.mock.calls.every(([url]) => String(url).endsWith('/product/getAll'))).toBe(true)
-  })
-  it('looks up an existing order and displays server status without claiming payment', async () => {
+    await fillCheckout(user)
+    await fillCard(user, '1234')
+    await user.click(screen.getByRole('button', { name: 'Place order' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('enough stock')
+    expect(localStorage.getItem('radiantskin.bag.v1')).toContain('"productId":1')
+  }, 15000)
+  it('looks up an existing order and displays its latest status', async () => {
     fetcher.mockImplementation(
       async (url) =>
         new Response(
@@ -247,7 +333,7 @@ describe('Customer storefront', () => {
     await user.type(screen.getByLabelText('Order number'), '42')
     await user.click(screen.getByRole('button', { name: 'Track order' }))
     expect(await screen.findByRole('heading', { name: 'shipped' })).toBeTruthy()
-    expect(screen.getByText(/does not confirm payment/)).toBeTruthy()
+    expect(screen.getByText(/Keep your order number handy/)).toBeTruthy()
   })
   it('provides mobile menu navigation and a useful unknown-route page', async () => {
     const user = userEvent.setup()
@@ -287,7 +373,9 @@ describe('Customer account creation', () => {
     await fillRegistration(user)
     await user.click(screen.getByRole('button', { name: 'Create account' }))
 
-    expect(await screen.findByRole('heading', { name: 'Your account has been created.' })).toBeTruthy()
+    expect(
+      await screen.findByRole('heading', { name: 'Your account has been created.' }),
+    ).toBeTruthy()
     const call = fetcher.mock.calls.find(([url]) => String(url).endsWith('/customer/register'))
     expect(call?.[0]).toBe('/api/customer/register')
     expect(JSON.parse(String(call?.[1]?.body))).toEqual({
@@ -311,7 +399,11 @@ describe('Customer account creation', () => {
     await fillRegistration(user)
     await user.click(screen.getByRole('button', { name: 'Create account' }))
 
-    expect((await screen.findByRole('alert')).textContent).toContain('An account with this email already exists.')
-    expect((screen.getByLabelText('Email address') as HTMLInputElement).value).toBe('Sam@Example.com')
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'An account with this email already exists.',
+    )
+    expect((screen.getByLabelText('Email address') as HTMLInputElement).value).toBe(
+      'Sam@Example.com',
+    )
   })
 })

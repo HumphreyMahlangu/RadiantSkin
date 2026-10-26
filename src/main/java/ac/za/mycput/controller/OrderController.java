@@ -2,6 +2,7 @@ package ac.za.mycput.controller;
 
 import ac.za.mycput.domain.Order;
 import ac.za.mycput.domain.OrderStatus;
+import ac.za.mycput.dto.OrderSummary;
 import ac.za.mycput.service.IOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,8 +39,9 @@ public class OrderController {
     }
 
     @GetMapping("/read/{orderId}")
-    public Order read(@PathVariable Long orderId) {
-        return service.read(orderId);
+    public OrderSummary read(@PathVariable Long orderId) {
+        Order order = service.read(orderId);
+        return order == null ? null : OrderSummary.from(order);
     }
 
     @GetMapping("/customer/{customerId}")

@@ -13,6 +13,7 @@ type Store = {
   bag: BagItem[]
   setQuantity: (product: Product, quantity: number) => void
   remove: (productId: number) => void
+  clearBag: () => void
   count: number
   notice: string
 }
@@ -105,6 +106,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         bag,
         setQuantity,
         remove: (id) => setBag((current) => current.filter((item) => item.productId !== id)),
+        clearBag: () => {
+          setBag([])
+          setNotice('')
+        },
         count: bag.reduce((sum, item) => sum + item.quantity, 0),
         notice,
       }}

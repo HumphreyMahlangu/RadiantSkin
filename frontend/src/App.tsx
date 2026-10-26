@@ -11,8 +11,11 @@ import {
 } from 'react-router-dom'
 import { FiArrowRight, FiArrowUpRight, FiMenu, FiSearch, FiShoppingBag, FiX } from 'react-icons/fi'
 import { StoreProvider, useStore } from './StoreContext'
+import { AuthProvider, useAuth } from './AuthContext'
 import { useScrollReveal } from './useScrollReveal'
 import RegisterPage from './pages/Register'
+import LoginPage from './pages/Login'
+import AccountPage from './pages/Account'
 import {
   HomePage,
   ShopPage,
@@ -25,6 +28,7 @@ import {
 
 function Shell() {
   const { count, notice } = useStore()
+  const { user } = useAuth()
   const [menu, setMenu] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
@@ -60,7 +64,20 @@ function Shell() {
             <Link to="/shop?category=hair">Hair care</Link>
           </nav>
           <div className="header-actions">
-            <Link className="account-link" to="/register">Create account</Link>
+            {user ? (
+              <Link className="account-link" to="/account">
+                My account
+              </Link>
+            ) : (
+              <>
+                <Link className="account-link" to="/login">
+                  Log in
+                </Link>
+                <Link className="account-link" to="/register">
+                  Create account
+                </Link>
+              </>
+            )}
             <Link className="track-link" to="/orders">
               Track order
             </Link>
@@ -93,7 +110,14 @@ function Shell() {
               <Link to="/shop?category=body">Body care</Link>
               <Link to="/shop?category=hair">Hair care</Link>
               <Link to="/orders">Track order</Link>
-              <Link to="/register">Create account</Link>
+              {user ? (
+                <Link to="/account">My account</Link>
+              ) : (
+                <>
+                  <Link to="/login">Log in</Link>
+                  <Link to="/register">Create account</Link>
+                </>
+              )}
             </nav>
             <form onSubmit={search}>
               <label className="sr-only" htmlFor="mobile-search">
@@ -122,6 +146,8 @@ function Shell() {
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/account" element={<AccountPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
@@ -150,7 +176,14 @@ function Shell() {
             <span className="eyebrow">At your service</span>
             <Link to="/bag">Your shopping bag</Link>
             <Link to="/orders">Track your order</Link>
-            <Link to="/register">Create an account</Link>
+            {user ? (
+              <Link to="/account">Your account</Link>
+            ) : (
+              <>
+                <Link to="/login">Log in to your account</Link>
+                <Link to="/register">Create an account</Link>
+              </>
+            )}
             <p>
               South Africa
               <br />
@@ -176,9 +209,11 @@ function Shell() {
 export default function App() {
   return (
     <BrowserRouter>
-      <StoreProvider>
-        <Shell />
-      </StoreProvider>
+      <AuthProvider>
+        <StoreProvider>
+          <Shell />
+        </StoreProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

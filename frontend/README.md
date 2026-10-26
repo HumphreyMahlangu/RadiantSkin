@@ -34,22 +34,22 @@ The default Vite proxy forwards `/api/*` to `http://127.0.0.1:8080/*`, removing 
 | Product reviews                                                | `GET /review/product/{productId}`                                |
 | Submit a review as a registered customer                       | `POST /review/submit` with account email and password            |
 | Shopping bag                                                   | Local browser storage; product IDs and quantities only           |
-| Checkout                                                       | Local contact/address review and fictional demo payment; no real order |
+| Checkout                                                       | `POST /checkout/place` saves an order and reduces stock atomically |
 
 Product categories are identified from the existing subtype fields: `usageInstructions`, `hairConcern`, and `skinConcern`. Prices use South African rand. Search, sorting, and filters run on the fetched catalogue and remain in the URL. The API adapter validates prices, limits request duration, handles null order responses, and omits customer credentials from the frontend order model.
 
-The bag enforces the available stock quantity, survives refreshes, and synchronizes between tabs. Removed or unavailable catalogue items remain visible for removal rather than silently disappearing. Contact and address drafts stay in page memory and are never sent or stored in browser storage.
+The bag enforces the available stock quantity, survives refreshes, and synchronizes between tabs. Removed or unavailable catalogue items remain visible for removal rather than silently disappearing. Contact and address drafts stay in page memory until checkout submits them to the backend; they are not stored in browser storage. Successful checkout clears the bag and shows the saved order number. Failed checkout preserves the bag.
 
-Customers can create an account from the storefront's **Create account** link. The form validates required details, shows duplicate-email and connection errors, and confirms success without storing the password in browser storage. Sign-in and account sessions are not yet connected to this storefront.
+Customers can create an account from the storefront's **Create account** link. The form validates required details, shows duplicate-email and connection errors, and confirms success without storing the password in browser storage. Existing customers can log in at `/login`, see their details at `/account`, and log out. The storefront restores its signed-in state using `GET /auth/session`, not browser-stored identity or credentials. `POST /auth/login` creates a server session and `POST /auth/logout` invalidates it; all requests include cookies. Sessions expire after 30 minutes of inactivity or a backend restart. Header, footer, registration confirmation and mobile navigation link to login.
 
 Product pages load reviews from the review API. Registered customers can submit a rating and a 3–240 character review after confirming their email and password. The review response contains only its rating, comment, date, and ID; the form clears the password after a response and does not put credentials in browser storage. The existing legacy review write routes and other customer/order routes still need access control before public deployment.
 
 ## Current integration boundary
 
-- The product API can return an empty catalogue from a fresh database. Product counts in an existing local database depend on its current contents. Checkout and live order flows have not been reverified in this pass.
-- The existing entity responses have circular relationships, and cart-item writes require an abstract `Product`. These must be resolved in a later backend pass before reliable checkout integration.
-- The backend has no authenticated session flow or payment-provider integration. The frontend does not invent login, account access, real payment success, shipping rates, or a real order confirmation. Its order lookup displays only the existing endpoint's order summary. Backend access control remains a prerequisite for public deployment.
-- Demo checkout validates contact and delivery details, then accepts only the fictional card values shown on the page. Approval and decline are simulated in the browser. Card details are not sent or stored, and no customer, cart, payment, or order records are created. The bag remains saved after a demo approval.
+- The product API can return an empty catalogue from a fresh database. Product counts in an existing local database depend on its current contents.
+- Storefront checkout sends product IDs, quantities, the displayed total, delivery details, and a request UUID. The server locks products, checks current prices and stock, and saves an order with cascading items in one transaction. The request UUID prevents duplicates on retry. The storefront uses its browser bag, independently of the legacy database cart routes.
+- The backend has cookie-based login sessions but no payment-provider integration. Checkout supports guests, prefills signed-in customers’ contact details, stores a delivery/contact snapshot, and links signed-in orders using the server session. An unverified email does not identify an account. Delivery is complimentary. Order creation and lookup return a receipt DTO without customer credentials, contact details or entity cycles. Other legacy APIs still need access control before public deployment.
+- For the school assignment, the card form accepts any nonempty numeric card number with spaces or hyphens, an MM/YY expiry and a 3–4 digit security code. It performs no bank validation or payment processing. Card fields never enter the checkout payload or browser storage and clear after every request. The website uses normal customer-facing checkout wording.
 
 ## Checks
 
@@ -59,9 +59,9 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-The tests cover API shapes and failures, subtype mapping, invalid prices and IDs, saved-bag recovery, stock limits, filters, catalogue retry, review loading and posting, demo payment approval and decline, checkout privacy, order lookup, navigation, backend failure and recovery, and empty database responses. They use a DOM test environment and mocked API responses; they do not substitute for browser layout or live backend verification.
+The frontend tests cover API shapes and failures, subtype mapping, invalid prices and IDs, saved-bag recovery, stock limits, filters, catalogue retry, review loading and posting, arbitrary card acceptance, successful checkout and persisted bag clearing, checkout failure and retry, card privacy, order lookup, navigation, backend failure and recovery, and empty database responses. They use a DOM test environment and mocked API responses. The frontend also tests login, incorrect credentials, connection errors, session restoration, logout, forged browser identity, mobile navigation and returning to checkout with prefilled details. The backend `AccountLoginTest` checks registration-to-login, session rotation and restoration, logout, invalid credentials, and authenticated checkout ownership; all test data rolls back. The backend `StorefrontCheckoutTest` checks database persistence, stock reduction, duplicate-request handling, receipt lookup and invalid input using transactions that roll back test data.
 
-The UI includes responsive layouts, keyboard focus styles, labelled form controls, reduced-motion support, loading states, empty states, broken-image fallbacks, and retry actions. Connected browser tools were unavailable during this pass, so visual verification in a browser remains outstanding.
+The UI includes responsive layouts, keyboard focus styles, labelled form controls, reduced-motion support, loading states, empty states, broken-image fallbacks, and retry actions. Checkout was also verified in the running local browser, including saved order confirmation and an empty bag.
 
 ## Production build
 
