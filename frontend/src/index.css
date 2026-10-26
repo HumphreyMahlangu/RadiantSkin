@@ -927,45 +927,35 @@ details p {
 .checkout-review .text-link {
   margin-top: 25px;
 }
-.demo-payment {
+.card-payment {
   margin-top: 38px;
   padding-top: 32px;
   border-top: 1px solid var(--line);
 }
-.demo-payment h3 {
+.card-payment h3 {
   margin: 12px 0;
   font-family: var(--display-font);
   font-size: 32px;
   font-weight: 400;
 }
-.demo-payment-intro {
+.card-payment-intro {
   font-size: 13px;
 }
-.demo-card-hint {
-  margin: 22px 0;
-  padding: 19px 20px;
-  background: var(--surface);
-}
-.demo-card-hint p {
-  font-size: 13px;
-  line-height: 1.8;
-  overflow-wrap: anywhere;
-}
-.demo-payment-fields {
+.card-payment-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px 16px;
 }
-.demo-payment-field {
+.card-payment-field {
   display: flex;
   flex-direction: column;
   gap: 9px;
   font-size: 13px;
 }
-.demo-payment-field.wide {
+.card-payment-field.wide {
   grid-column: 1 / -1;
 }
-.demo-payment-field input {
+.card-payment-field input {
   width: 100%;
   min-height: 49px;
   padding: 12px;
@@ -975,20 +965,27 @@ details p {
   color: var(--ink);
   font-size: 16px;
 }
-.demo-payment-field input[aria-invalid='true'] {
+.card-payment-field input[aria-invalid='true'] {
   border-color: #914534;
 }
-.demo-payment-submit {
+.card-payment-submit {
   width: 100%;
   margin-top: 25px;
 }
-.demo-payment .account-alert {
+.card-payment .account-alert {
   margin-top: 22px;
 }
-.demo-payment-success .button {
+.checkout-success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
   margin-top: 26px;
 }
-.demo-payment-success p + p {
+.checkout-success-actions .text-link {
+  margin-top: 0;
+}
+.card-payment-success p + p {
   margin-top: 14px;
 }
 .orders-page {
@@ -1362,6 +1359,34 @@ details p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px 18px;
 }
+.account-fields-single {
+  grid-template-columns: 1fr;
+}
+.account-switch,
+.checkout-account-note {
+  margin: 24px 0;
+  font-size: 13px;
+}
+.account-details {
+  margin-top: 28px;
+}
+.account-details > div {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.account-details dt {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.account-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+.account-logout {
+  margin-top: 30px;
+}
 .account-field {
   display: flex;
   flex-direction: column;
@@ -1436,7 +1461,7 @@ details p {
   .account-panel {
     padding: 28px 22px;
   }
-  .demo-payment-fields {
+  .card-payment-fields {
     grid-template-columns: 1fr;
   }
 }

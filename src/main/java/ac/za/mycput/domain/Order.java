@@ -9,6 +9,7 @@
 package ac.za.mycput.domain;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,6 +28,14 @@ public class Order {
     private OrderStatus status;
     private BigDecimal totalAmount;
 
+    @JsonIgnore
+    @Column(unique = true, length = 36)
+    private String checkoutReference;
+
+    @JsonIgnore
+    @Embedded
+    private CheckoutDetails checkoutDetails;
+
     @ManyToOne
     private Customer customer; // Link with the customer class when available
 
@@ -44,6 +53,8 @@ public class Order {
         this.orderDate = builder.orderDate;
         this.status = builder.status;
         this.totalAmount = builder.totalAmount;
+        this.checkoutReference = builder.checkoutReference;
+        this.checkoutDetails = builder.checkoutDetails;
         this.customer = builder.customer;
         this.orderItems = builder.orderItems;
         this.payments = builder.payments;
@@ -79,6 +90,18 @@ public class Order {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public String getCheckoutReference() { return checkoutReference; }
+
+    public void setCheckoutReference(String checkoutReference) {
+        this.checkoutReference = checkoutReference;
+    }
+
+    public CheckoutDetails getCheckoutDetails() { return checkoutDetails; }
+
+    public void setCheckoutDetails(CheckoutDetails checkoutDetails) {
+        this.checkoutDetails = checkoutDetails;
     }
 
     public Customer getCustomer() {
@@ -123,6 +146,8 @@ public class Order {
         private LocalDateTime orderDate;
         private OrderStatus status;
         private BigDecimal totalAmount;
+        private String checkoutReference;
+        private CheckoutDetails checkoutDetails;
         private Customer customer;
         private List<OrderItem> orderItems = new ArrayList<>();
         private List<Payment> payments = new ArrayList<>();
@@ -167,6 +192,8 @@ public class Order {
             this.orderDate = order.orderDate;
             this.status = order.status;
             this.totalAmount = order.totalAmount;
+            this.checkoutReference = order.checkoutReference;
+            this.checkoutDetails = order.checkoutDetails;
             this.customer = order.customer;
             this.orderItems = order.orderItems;
             this.payments = order.payments;

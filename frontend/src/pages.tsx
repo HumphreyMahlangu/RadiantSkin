@@ -20,10 +20,11 @@ import {
   ShopLink,
 } from './components'
 import { useStore } from './StoreContext'
-import DemoPaymentForm from './DemoPaymentForm'
+import { useAuth } from './AuthContext'
+import CardPaymentForm from './CardPaymentForm'
 import ProductReviews from './ProductReviews'
 import { categories, createApi, money } from './lib/store'
-import type { Order, Product } from './lib/store'
+import type { CheckoutDetails, Order, Product } from './lib/store'
 
 export { HomePage } from './HomePage'
 
@@ -354,10 +355,10 @@ export function BagPage() {
               </div>
               <div className="summary-line muted">
                 <span>Delivery</span>
-                <span>Not yet calculated</span>
+                <span>Complimentary</span>
               </div>
               <div className="summary-total">
-                <span>Subtotal</span>
+                <span>Total</span>
                 <span>{money(total)}</span>
               </div>
               {invalid ? (
@@ -369,10 +370,7 @@ export function BagPage() {
                   Review checkout <FiArrowRight />
                 </Link>
               )}
-              <p className="summary-note">
-                Online ordering is not available yet. You can still save your essentials and prepare
-                your checkout.
-              </p>
+              <p className="summary-note">Review your details and place your order at checkout.</p>
               <button className="text-link refresh-stock" onClick={reload}>
                 Refresh prices & availability
               </button>
@@ -396,9 +394,12 @@ const provinces = [
   'Western Cape',
 ]
 export function CheckoutPage() {
-  const { bag, products } = useStore()
-  const [draft, setDraft] = useState<Record<string, string> | null>(null)
-  const [demoReference, setDemoReference] = useState('')
+  const { user, loading: accountLoading } = useAuth()
+  const { bag, products, clearBag, reload } = useStore()
+  const [draft, setDraft] = useState<CheckoutDetails | null>(null)
+  const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
+  const [placing, setPlacing] = useState(false)
+  const requestId = useRef(crypto.randomUUID())
   const formRef = useRef<HTMLFormElement>(null)
   const reviewRef = useRef<HTMLDivElement>(null)
   const invalid = bag.some((item) => {
@@ -423,14 +424,32 @@ export function CheckoutPage() {
         String(value).trim(),
       ]),
     )
-    setDraft(details)
+    requestId.current = crypto.randomUUID()
+    setDraft(details as CheckoutDetails)
+  }
+  async function placeOrder() {
+    if (!draft || !bag.length || invalid)
+      throw new Error('Review your bag before placing your order.')
+    const api = createApi(import.meta.env.VITE_API_BASE_URL || '/api')
+    // A retry uses the same request ID, even if the first response was lost.
+    const order = await api.checkout({
+      requestId: requestId.current,
+      items: bag.map(({ productId, quantity }) => ({ productId, quantity })),
+      details: draft,
+      expectedTotal: total,
+    })
+    setCompletedOrder(order)
+    setDraft(null)
+    formRef.current?.reset()
+    clearBag()
+    reload()
   }
   useEffect(() => {
     if (draft) reviewRef.current?.focus()
   }, [draft])
   useEffect(() => {
-    if (demoReference) reviewRef.current?.focus()
-  }, [demoReference])
+    if (completedOrder) reviewRef.current?.focus()
+  }, [completedOrder])
   return (
     <section className="section page">
       <Link className="text-link" to="/bag">
@@ -440,13 +459,42 @@ export function CheckoutPage() {
         <span className="eyebrow">The final details</span>
         <h1>Checkout.</h1>
       </div>
-      {!bag.length ? (
+      {completedOrder ? (
+        <div
+          className="checkout-review card-payment-success"
+          ref={reviewRef}
+          tabIndex={-1}
+          role="status"
+        >
+          <span className="eyebrow">
+            <FiCheck /> Order received
+          </span>
+          <h2>Thank you for your order.</h2>
+          <p>
+            Order number: <strong>{completedOrder.orderId}</strong>
+          </p>
+          <p>Your order has been placed and your bag is now empty.</p>
+          <p>
+            Total: <strong>{money(completedOrder.totalAmount)}</strong>
+          </p>
+          <div className="checkout-success-actions">
+            <Link className="button" to={`/orders?order=${completedOrder.orderId}`}>
+              Track your order <FiArrowRight />
+            </Link>
+            <Link className="text-link" to="/shop">
+              Continue shopping <FiArrowRight />
+            </Link>
+          </div>
+        </div>
+      ) : !bag.length ? (
         <EmptyState title="Start with a little care" action={<ShopLink />}>
           Add an essential to your bag before preparing checkout.
         </EmptyState>
       ) : (
         <CatalogueStatus>
-          {invalid ? (
+          {accountLoading ? (
+            <p role="status">Loading your checkout…</p>
+          ) : invalid ? (
             <EmptyState
               title="Your bag needs a quick update"
               action={
@@ -459,31 +507,47 @@ export function CheckoutPage() {
             </EmptyState>
           ) : (
             <>
-              <div className="checkout-notice">
-                <FiInfo />
-                <div>
-                  <strong>Demo checkout only.</strong>
-                  <p>
-                    You can review your details and try a fictional card below. No real order will
-                    be placed and no payment will be taken.
-                  </p>
-                </div>
-              </div>
               <div className="checkout-layout">
                 <form ref={formRef} className="checkout-form" onSubmit={review} hidden={!!draft}>
+                  {!user && (
+                    <p className="checkout-account-note">
+                      Already have an account?{' '}
+                      <Link className="text-link" to="/login?next=/checkout">
+                        Log in for a quicker checkout
+                      </Link>
+                      .
+                    </p>
+                  )}
                   <fieldset>
                     <legend>
                       <span>01</span> Your details
                     </legend>
                     <div className="form-grid">
-                      <Field label="First name" name="firstName" autoComplete="given-name" />
-                      <Field label="Last name" name="lastName" autoComplete="family-name" />
-                      <Field label="Email address" name="email" type="email" autoComplete="email" />
+                      <Field
+                        label="First name"
+                        name="firstName"
+                        autoComplete="given-name"
+                        defaultValue={user?.firstName}
+                      />
+                      <Field
+                        label="Last name"
+                        name="lastName"
+                        autoComplete="family-name"
+                        defaultValue={user?.lastName}
+                      />
+                      <Field
+                        label="Email address"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        defaultValue={user?.email}
+                      />
                       <Field
                         label="Phone number"
                         name="phoneNumber"
                         type="tel"
                         autoComplete="tel"
+                        defaultValue={user?.phoneNumber}
                         pattern="[+0-9\s\(\)\-]{7,25}"
                       />
                     </div>
@@ -532,62 +596,56 @@ export function CheckoutPage() {
                     Review details <FiArrowRight />
                   </button>
                   <p className="form-note">
-                    Your contact details stay in this page until you leave or reload it.
+                    Check your contact details and delivery address before continuing.
                   </p>
                 </form>
                 {draft && (
                   <div className="checkout-review" ref={reviewRef} tabIndex={-1}>
-                    {demoReference ? (
-                      <div className="demo-payment-success" role="status">
-                        <span className="eyebrow"><FiCheck /> Demo approved</span>
-                        <h2>Demo checkout complete.</h2>
-                        <p>Reference: <strong>{demoReference}</strong></p>
-                        <p>No real order was placed and no money was taken. Your bag is still saved.</p>
-                        <Link className="button" to="/shop">Back to the collection <FiArrowRight /></Link>
+                    <>
+                      <span className="eyebrow">
+                        <FiCheck /> Ready for review
+                      </span>
+                      <h2>Your checkout details</h2>
+                      <div>
+                        <h3>Contact</h3>
+                        <p>
+                          {draft.firstName} {draft.lastName}
+                          <br />
+                          {draft.email}
+                          <br />
+                          {draft.phoneNumber}
+                        </p>
                       </div>
-                    ) : (
-                      <>
-                        <span className="eyebrow">
-                          <FiCheck /> Ready for review
-                        </span>
-                        <h2>Your checkout details</h2>
-                        <div>
-                          <h3>Contact</h3>
-                          <p>
-                            {draft.firstName} {draft.lastName}
-                            <br />
-                            {draft.email}
-                            <br />
-                            {draft.phoneNumber}
-                          </p>
-                        </div>
-                        <div>
-                          <h3>Delivery address</h3>
-                          <p>
-                            {draft.street}
-                            <br />
-                            {draft.city}, {draft.province} {draft.postalCode}
-                            <br />
-                            {draft.country}
-                          </p>
-                        </div>
-                        <button
-                          className="text-link"
-                          onClick={() => {
-                            setDraft(null)
-                            window.setTimeout(() => formRef.current?.querySelector('input')?.focus(), 0)
-                          }}
-                        >
-                          <FiArrowLeft /> Edit details
-                        </button>
-                        <DemoPaymentForm onApproved={setDemoReference} />
-                      </>
-                    )}
+                      <div>
+                        <h3>Delivery address</h3>
+                        <p>
+                          {draft.street}
+                          <br />
+                          {draft.city}, {draft.province} {draft.postalCode}
+                          <br />
+                          {draft.country}
+                        </p>
+                      </div>
+                      <button
+                        className="text-link"
+                        disabled={placing}
+                        onClick={() => {
+                          setDraft(null)
+                          window.setTimeout(
+                            () => formRef.current?.querySelector('input')?.focus(),
+                            0,
+                          )
+                        }}
+                      >
+                        <FiArrowLeft /> Edit details
+                      </button>
+                      <CardPaymentForm onPlaceOrder={placeOrder} onProcessingChange={setPlacing} />
+                    </>
                   </div>
                 )}
                 <aside className="order-summary">
                   <span className="eyebrow">Your essentials</span>
-                  <h2>Order preview</h2>
+                  <h2>Order summary</h2>
                   {bag.map((item) => (
                     <div className="summary-line" key={item.productId}>
                       <span>
@@ -604,14 +662,14 @@ export function CheckoutPage() {
                   ))}
                   <div className="summary-line muted">
                     <span>Delivery</span>
-                    <span>Not yet calculated</span>
+                    <span>Complimentary</span>
                   </div>
                   <div className="summary-total">
-                    <span>Subtotal</span>
+                    <span>Total</span>
                     <span>{money(total)}</span>
                   </div>
                   <p className="summary-note">
-                    This is a demo checkout. Your bag stays saved, and no order or payment record is created.
+                    Your bag will be cleared once your order is confirmed.
                   </p>
                 </aside>
               </div>
@@ -629,6 +687,7 @@ function Field({
   autoComplete,
   pattern,
   wide = false,
+  defaultValue,
 }: {
   label: string
   name: string
@@ -636,12 +695,14 @@ function Field({
   autoComplete: string
   pattern?: string
   wide?: boolean
+  defaultValue?: string
 }) {
   return (
     <label className={wide ? 'wide' : ''}>
       {label}
       <input
         name={name}
+        defaultValue={defaultValue}
         type={type}
         autoComplete={autoComplete}
         required
@@ -653,6 +714,7 @@ function Field({
 }
 
 export function OrdersPage() {
+  const [params] = useSearchParams()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -694,6 +756,7 @@ export function OrdersPage() {
           <input
             id="orderId"
             name="orderId"
+            defaultValue={params.get('order') || ''}
             inputMode="numeric"
             pattern="[1-9][0-9]*"
             required
@@ -740,10 +803,7 @@ export function OrdersPage() {
             <span>Order total</span>
             <span>{money(order.totalAmount)}</span>
           </div>
-          <p className="summary-note">
-            This is your order status. It does not confirm payment or provide a courier delivery
-            estimate.
-          </p>
+          <p className="summary-note">Keep your order number handy to check the latest updates.</p>
         </article>
       )}
     </section>

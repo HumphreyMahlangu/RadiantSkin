@@ -13,6 +13,23 @@ export type Product = {
   reviews: { reviewId: number; rating: number; comment: string }[]
 }
 export type BagItem = { productId: number; quantity: number }
+export type CheckoutDetails = {
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  street: string
+  city: string
+  province: string
+  postalCode: string
+  country: string
+}
+export type CheckoutSubmission = {
+  requestId: string
+  items: BagItem[]
+  details: CheckoutDetails
+  expectedTotal: number
+}
 export type Review = { reviewId: number; rating: number; comment: string; reviewDate: string }
 export type ReviewSubmission = {
   productId: number
@@ -41,6 +58,27 @@ const record = (value: unknown): Record<string, unknown> => {
 const positiveId = (value: unknown) =>
   typeof value === 'number' && Number.isSafeInteger(value) && value > 0
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
+function normalizeOrder(value: unknown): Order {
+  const order = record(value)
+  if (!positiveId(order.orderId)) throw new ApiError('The store did not return an order number.')
+  return {
+    orderId: order.orderId as number,
+    orderDate: text(order.orderDate),
+    status: text(order.status) || 'PENDING',
+    totalAmount: amount(order.totalAmount),
+    orderItems: Array.isArray(order.orderItems)
+      ? order.orderItems.map((value) => {
+          const item = record(value)
+          return {
+            orderItemId: Number(item.orderItemId),
+            quantity: Number(item.quantity),
+            unitPrice: amount(item.unitPrice),
+            product: item.product ? { name: text(record(item.product).name) } : null,
+          }
+        })
+      : [],
+  }
+}
 function amount(value: unknown): number {
   if ((typeof value !== 'number' && typeof value !== 'string') || value === '')
     throw new Error('A price is missing from the store response.')
@@ -90,9 +128,13 @@ export function safeImageUrl(value: string): string {
 }
 function normalizeReview(value: unknown): Review {
   const review = record(value)
-  if (!positiveId(review.reviewId) || !Number.isInteger(review.rating) ||
-      Number(review.rating) < 1 || Number(review.rating) > 5 ||
-      !text(review.comment).trim())
+  if (
+    !positiveId(review.reviewId) ||
+    !Number.isInteger(review.rating) ||
+    Number(review.rating) < 1 ||
+    Number(review.rating) > 5 ||
+    !text(review.comment).trim()
+  )
     throw new Error('A review could not be loaded. Please try again later.')
   return {
     reviewId: review.reviewId as number,
@@ -113,21 +155,32 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
     try {
       const response = await (fetcher ?? fetch)(`${baseUrl.replace(/\/$/, '')}${path}`, {
         ...init,
+        credentials: 'include',
         headers: { Accept: 'application/json', ...init?.headers },
         cache: 'no-store',
         signal: AbortSignal.any([AbortSignal.timeout(15000), ...(signal ? [signal] : [])]),
       })
-      if (!response.ok)
+      if (!response.ok) {
+        if (path === '/checkout/place' && (response.status === 400 || response.status === 409)) {
+          const error = await response.json().catch(() => null)
+          throw new ApiError(
+            error && typeof error.message === 'string'
+              ? error.message
+              : 'Review your bag and details, then try again.',
+            response.status,
+          )
+        }
         throw new ApiError(
           response.status === 401
             ? 'That email or password is incorrect.'
             : response.status === 400 && path === '/review/submit'
               ? 'Check your rating and review, then try again.'
               : response.status === 404 && path.startsWith('/order/')
-            ? 'We couldn’t find that order. Check the order number and try again.'
-            : 'The store is temporarily unavailable. Please try again in a moment.',
+                ? 'We couldn’t find that order. Check the order number and try again.'
+                : 'The store is temporarily unavailable. Please try again in a moment.',
           response.status,
         )
+      }
       const body: unknown = await response.json()
       if (body === null)
         throw new ApiError(
@@ -155,25 +208,17 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
     async order(id: string, signal?: AbortSignal): Promise<Order> {
       if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)))
         throw new ApiError('Enter a valid order number.', 400)
-      const order = record(await request(`/order/read/${encodeURIComponent(id)}`, signal))
-      if (!positiveId(order.orderId)) throw new ApiError('We couldn’t find that order.', 404)
-      return {
-        orderId: order.orderId as number,
-        orderDate: text(order.orderDate),
-        status: text(order.status) || 'PENDING',
-        totalAmount: amount(order.totalAmount),
-        orderItems: Array.isArray(order.orderItems)
-          ? order.orderItems.map((value) => {
-              const item = record(value)
-              return {
-                orderItemId: Number(item.orderItemId),
-                quantity: Number(item.quantity),
-                unitPrice: amount(item.unitPrice),
-                product: item.product ? { name: text(record(item.product).name) } : null,
-              }
-            })
-          : [],
-      }
+      return normalizeOrder(await request(`/order/read/${encodeURIComponent(id)}`, signal))
+    },
+    async checkout(input: CheckoutSubmission): Promise<Order> {
+      // Send only order details. Card inputs never leave the payment form.
+      return normalizeOrder(
+        await request('/checkout/place', undefined, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        }),
+      )
     },
     async reviews(productId: number, signal?: AbortSignal): Promise<Review[]> {
       if (!positiveId(productId)) throw new ApiError('Choose a valid product.', 400)

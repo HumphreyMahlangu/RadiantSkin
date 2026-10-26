@@ -13,7 +13,14 @@ const empty: Values = {
   password: '',
   confirmPassword: '',
 }
-const fields: Field[] = ['firstName', 'lastName', 'email', 'phoneNumber', 'password', 'confirmPassword']
+const fields: Field[] = [
+  'firstName',
+  'lastName',
+  'email',
+  'phoneNumber',
+  'password',
+  'confirmPassword',
+]
 
 function validate(values: Values): Partial<Record<Field, string>> {
   const errors: Partial<Record<Field, string>> = {}
@@ -107,15 +114,19 @@ export default function RegisterPage() {
         <span className="eyebrow">Your everyday care</span>
         <h1>Create an account.</h1>
         <p>Keep your details ready for the RadiantSkin experiences ahead.</p>
-        <a className="text-link" href="#account-form">Start with your details</a>
+        <a className="text-link" href="#account-form">
+          Start with your details
+        </a>
       </div>
       <div className="account-panel" id="account-form">
         {created ? (
           <div className="account-success" role="status">
             <span className="eyebrow">Welcome to RadiantSkin</span>
             <h2>Your account has been created.</h2>
-            <p>You can continue browsing the collection. Account sign-in is not available in this storefront yet.</p>
-            <Link className="button" to="/shop">Shop the collection</Link>
+            <p>Your account is ready. Log in to continue shopping.</p>
+            <Link className="button" to="/login">
+              Log in
+            </Link>
           </div>
         ) : (
           <>
@@ -129,17 +140,23 @@ export default function RegisterPage() {
             )}
             <form onSubmit={submit} noValidate>
               <div className="account-fields">
-                {([
-                  ['firstName', 'First name', 'given-name', 'text'],
-                  ['lastName', 'Last name', 'family-name', 'text'],
-                  ['email', 'Email address', 'email', 'email'],
-                  ['phoneNumber', 'Phone number', 'tel', 'tel'],
-                  ['password', 'Password', 'new-password', 'password'],
-                  ['confirmPassword', 'Confirm password', 'new-password', 'password'],
-                ] as const).map(([field, label, autocomplete, type]) => {
-                  const errorMessage = (touched[field] || submitted)
-                    ? errors[field] || (field === 'email' && emailTaken ? 'Use a different email address.' : undefined)
-                    : undefined
+                {(
+                  [
+                    ['firstName', 'First name', 'given-name', 'text'],
+                    ['lastName', 'Last name', 'family-name', 'text'],
+                    ['email', 'Email address', 'email', 'email'],
+                    ['phoneNumber', 'Phone number', 'tel', 'tel'],
+                    ['password', 'Password', 'new-password', 'password'],
+                    ['confirmPassword', 'Confirm password', 'new-password', 'password'],
+                  ] as const
+                ).map(([field, label, autocomplete, type]) => {
+                  const errorMessage =
+                    touched[field] || submitted
+                      ? errors[field] ||
+                        (field === 'email' && emailTaken
+                          ? 'Use a different email address.'
+                          : undefined)
+                      : undefined
                   return (
                     <div className="account-field" key={field}>
                       <label htmlFor={field}>{label}</label>
@@ -152,11 +169,25 @@ export default function RegisterPage() {
                         onChange={change}
                         onBlur={() => setTouched((current) => ({ ...current, [field]: true }))}
                         aria-invalid={Boolean(errorMessage)}
-                        aria-describedby={errorMessage ? `${field}-error${field === 'password' ? ' password-hint' : ''}` : field === 'password' ? 'password-hint' : undefined}
+                        aria-describedby={
+                          errorMessage
+                            ? `${field}-error${field === 'password' ? ' password-hint' : ''}`
+                            : field === 'password'
+                              ? 'password-hint'
+                              : undefined
+                        }
                         required
                       />
-                      {field === 'password' && <span className="account-hint" id="password-hint">At least 8 characters.</span>}
-                      {errorMessage && <span className="account-field-error" id={`${field}-error`}>{errorMessage}</span>}
+                      {field === 'password' && (
+                        <span className="account-hint" id="password-hint">
+                          At least 8 characters.
+                        </span>
+                      )}
+                      {errorMessage && (
+                        <span className="account-field-error" id={`${field}-error`}>
+                          {errorMessage}
+                        </span>
+                      )}
                     </div>
                   )
                 })}
@@ -165,6 +196,12 @@ export default function RegisterPage() {
                 {submitting ? 'Creating account…' : 'Create account'}
               </button>
             </form>
+            <p className="account-switch">
+              Already have an account?{' '}
+              <Link className="text-link" to="/login">
+                Log in
+              </Link>
+            </p>
           </>
         )}
       </div>
