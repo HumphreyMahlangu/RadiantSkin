@@ -1,5 +1,7 @@
 # Catalogue product photographs
 
+The three `radiantskin-*.svg` files are original product illustrations matching the legacy RadiantSkin catalogue names and sizes. They are illustrations, not photographs of manufactured packaging. `image-unavailable.svg` is an original neutral fallback. These SVGs have no external dependencies.
+
 Product packshots sourced from the linked retailer listings on 2026-09-09. Brands and product images belong to their respective owners; their inclusion identifies catalogue items and does not imply a retailer or brand partnership.
 
 | Local file                                  | Product source                                                                                                                                                                |
